@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Mi Cuenta')}"></head>
+<body>
+<main class="container">
+    <h1>Bienvenido(a), <span th:text="${fullName}">Paciente</span></h1>
+    <p>Este es un placeholder. El módulo de agendamiento de citas (CU-03) se construirá en la siguiente fase.</p>
+    <form th:action="@{/logout}" method="post">
+        <button type="submit" class="btn btn-secondary">Cerrar Sesión</button>
+    </form>
+</main>
+</body>
+</html>

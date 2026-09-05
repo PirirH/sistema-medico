@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Portal Web')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<!-- Meta tags con el token CSRF, para poder enviarlo desde JavaScript -->
+<meta name="_csrf" th:content="${_csrf.token}"/>
+<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+<main class="container">
+    <section class="hero">
+        <h1>Bienvenido al Portal del Hospital Central</h1>
+        <p>Consulte nuestras especialidades, sucursales y horarios, y agende su cita médica en línea.</p>
+        <button id="btnAgendarCita" class="btn btn-primary">Agendar Cita</button>
+    </section>
+
+    <section>
+        <h2>Especialidades Disponibles</h2>
+        <ul class="card-grid">
+            <li class="card" th:each="specialty : ${specialties}">
+                <h3 th:text="${specialty.name}">Especialidad</h3>
+                <p th:text="${specialty.description}">Descripción</p>
+            </li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Nuestras Sedes</h2>
+        <ul class="card-grid">
+            <li class="card" th:each="branch : ${branches}">
+                <h3 th:text="${branch.name}">Sucursal</h3>
+                <p th:text="${branch.address}">Dirección</p>
+                <p th:text="${branch.phone}">Teléfono</p>
+                <p th:text="${branch.openingHours}">Horario</p>
+            </li>
+        </ul>
+    </section>
+</main>
+
+<!-- Modal "Verificar Registro" (CU-00, paso 4) -->
+<div id="dpiModal" class="modal hidden">
+    <div class="modal-content">
+        <h2>Verificar Registro</h2>
+        <p>Ingrese su número de DPI para verificar si está registrado en el sistema.</p>
+        <input type="text" id="dpiInput" maxlength="13" placeholder="Número de DPI">
+        <div class="counter"><span id="dpiCount">0</span>/13 dígitos</div>
+        <p id="dpiError" class="error-text hidden"></p>
+        <div class="modal-actions">
+            <button id="btnCancelarDpi" class="btn btn-secondary">Cancelar</button>
+            <button id="btnVerificarDpi" class="btn btn-primary">Verificar DPI</button>
+        </div>
+        <p id="dpiLoading" class="hidden">Verificando...</p>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const modal = document.getElementById('dpiModal');
+    const dpiInput = document.getElementById('dpiInput');
+    const dpiCount = document.getElementById('dpiCount');
+    const dpiError = document.getElementById('dpiError');
+    const dpiLoading = document.getElementById('dpiLoading');
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+    document.getElementById('btnAgendarCita').addEventListener('click', () => {
+        modal.classList.remove('hidden');
+    });
+    document.getElementById('btnCancelarDpi').addEventListener('click', () => {
+        modal.classList.add('hidden');
+        dpiInput.value = '';
+        dpiCount.textContent = '0';
+        dpiError.classList.add('hidden');
+    });
+    dpiInput.addEventListener('input', () => {
+        dpiCount.textContent = dpiInput.value.length;
+    });
+
+    document.getElementById('btnVerificarDpi').addEventListener('click', async () => {
+        dpiError.classList.add('hidden');
+        dpiLoading.classList.remove('hidden');
+
+        try {
+            const response = await fetch(/*[[@{/verificar-dpi}]]*/ '/verificar-dpi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify({ dpi: dpiInput.value })
+            });
+            const data = await response.json();
+            dpiLoading.classList.add('hidden');
+
+            if (!response.ok) {
+                dpiError.textContent = data.message;
+                dpiError.classList.remove('hidden');
+                return;
+            }
+
+            if (data.redirectUrl) {
+                window.location.href = data.redirectUrl;
+            } else {
+                dpiError.textContent = data.message;
+                dpiError.classList.remove('hidden');
+            }
+        } catch (e) {
+            dpiLoading.classList.add('hidden');
+            dpiError.textContent = 'No se pudo conectar con el servidor. Intente de nuevo más tarde.';
+            dpiError.classList.remove('hidden');
+        }
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

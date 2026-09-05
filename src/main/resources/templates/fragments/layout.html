@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - Hospital Central'">Hospital Central</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header th:fragment="navbar" class="navbar">
+    <a th:href="@{/}" class="navbar-brand">🏥 Hospital Central</a>
+    <nav>
+        <a th:href="@{/}">Inicio</a>
+        <a th:href="@{/login}">Iniciar Sesión</a>
+    </nav>
+</header>
+</body>
+</html>

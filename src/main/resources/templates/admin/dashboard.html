@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Panel Administrativo')}"></head>
+<body>
+<main class="container">
+    <h1>Panel Administrativo</h1>
+    <p>Bienvenido(a), <span th:text="${fullName}">Usuario</span>.</p>
+    <p>Este es un placeholder. Los módulos de catálogos (CU-13/CU-14) y mantenimiento de usuarios (CU-01) se construirán en la siguiente fase.</p>
+    <form th:action="@{/logout}" method="post">
+        <button type="submit" class="btn btn-secondary">Cerrar Sesión</button>
+    </form>
+</main>
+</body>
+</html>
