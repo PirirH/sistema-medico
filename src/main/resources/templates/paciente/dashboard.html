@@ -4,7 +4,7 @@
 <body>
 <main class="container">
     <h1>Bienvenido(a), <span th:text="${fullName}">Paciente</span></h1>
-    <p>Este es un placeholder. El módulo de agendamiento de citas (CU-03) se construirá en la siguiente fase.</p>
+    <a th:href="@{/paciente/citas/nueva}" class="btn btn-primary">Agendar Cita</a>
     <form th:action="@{/logout}" method="post">
         <button type="submit" class="btn btn-secondary">Cerrar Sesión</button>
     </form>

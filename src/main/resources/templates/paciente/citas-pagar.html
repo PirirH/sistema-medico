@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Pagar Cita')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Pago de Cita</h1>
+
+    <div class="summary-box">
+        <p><strong>Cita:</strong> <span th:text="${appointment.appointmentNumber}"></span></p>
+        <p><strong>Especialidad:</strong> <span th:text="${appointment.branchSpecialty.specialty.name}"></span></p>
+        <p><strong>Sucursal:</strong> <span th:text="${appointment.branchSpecialty.branch.name}"></span></p>
+        <p><strong>Médico:</strong> <span th:text="'Dr(a). ' + ${appointment.doctor.fullName}"></span></p>
+        <p><strong>Fecha y hora:</strong>
+            <span th:text="${#temporals.format(appointment.scheduledAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <p><strong>Total a pagar:</strong>
+            Q<span th:text="${#numbers.formatDecimal(appointment.totalAmount, 1, 2)}"></span></p>
+    </div>
+
+    <p id="countdownMsg" class="error-text"></p>
+
+    <p th:if="${paymentError}" class="error-text" th:text="${paymentError}"></p>
+    <p th:if="${rejectionMessage}" class="error-text" th:text="${rejectionMessage}"></p>
+
+    <form th:action="@{'/paciente/citas/' + ${appointment.id} + '/pagar'}"
+          th:object="${paymentForm}" method="post" class="form" id="paymentForm">
+
+        <label for="cardNumber">Número de Tarjeta</label>
+        <input type="text" id="cardNumber" th:field="*{cardNumber}" placeholder="4111 1111 1111 1111" maxlength="24">
+        <p class="error-text" th:if="${#fields.hasErrors('cardNumber')}" th:errors="*{cardNumber}"></p>
+
+        <label for="cardHolderName">Nombre del Titular</label>
+        <input type="text" id="cardHolderName" th:field="*{cardHolderName}">
+        <p class="error-text" th:if="${#fields.hasErrors('cardHolderName')}" th:errors="*{cardHolderName}"></p>
+
+        <label for="expiryDate">Vencimiento (MM/AA)</label>
+        <input type="text" id="expiryDate" th:field="*{expiryDate}" placeholder="12/28" maxlength="5">
+        <p class="error-text" th:if="${#fields.hasErrors('expiryDate')}" th:errors="*{expiryDate}"></p>
+
+        <label for="cvv">CVV</label>
+        <input type="text" id="cvv" th:field="*{cvv}" maxlength="4">
+        <p class="error-text" th:if="${#fields.hasErrors('cvv')}" th:errors="*{cvv}"></p>
+
+        <button type="submit" id="payButton" class="btn btn-primary">Pagar</button>
+    </form>
+
+    <p class="admin-link">¿Prefiere pagar en efectivo? Puede acercarse a caja antes de que expire su reserva.</p>
+</main>
+
+<script th:inline="javascript">
+    const deadlineMs = /*[[${onlinePaymentDeadlineMillis}]]*/ 0;
+
+    function updateCountdown() {
+        const remaining = deadlineMs - Date.now();
+        const countdownMsg = document.getElementById('countdownMsg');
+        const payButton = document.getElementById('payButton');
+
+        if (remaining <= 0) {
+            countdownMsg.textContent = 'El tiempo para pagar en línea ha finalizado. Puede acercarse a caja para completar el pago.';
+            payButton.disabled = true;
+            clearInterval(timer);
+            return;
+        }
+
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        countdownMsg.textContent = 'Tiempo restante para pagar en línea: ' + minutes + ':' + String(seconds).padStart(2, '0');
+    }
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+</script>
+</body>
+</html>

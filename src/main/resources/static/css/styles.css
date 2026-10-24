@@ -50,3 +50,20 @@ body {
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }
 .counter { font-size: 0.85rem; color: #6b7280; text-align: right; }
 #dpiInput { width: 100%; padding: 0.55rem; border: 1px solid #d1d5db; border-radius: 6px; margin-top: 0.5rem; }
+
+.form select, .form textarea { padding: 0.55rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; font-family: inherit; }
+.form textarea { resize: vertical; min-height: 90px; }
+
+.wizard-progress { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.wizard-progress span { flex: 1; text-align: center; padding: 0.5rem; border-radius: 6px; background: #e5e7eb; font-size: 0.85rem; font-weight: 600; }
+.wizard-progress span.active { background: #0f4c81; color: white; }
+
+.wizard-actions { display: flex; justify-content: space-between; margin-top: 1.2rem; }
+.summary-box { background: #f4f6f8; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+.summary-box p { margin: 0.3rem 0; }
+
+.navbar-logout { display: inline; margin: 0; }
+.navbar button.btn-link {
+    background: none; border: none; color: white; font-size: 1rem;
+    cursor: pointer; margin-left: 1.5rem; padding: 0; font-family: inherit;
+}

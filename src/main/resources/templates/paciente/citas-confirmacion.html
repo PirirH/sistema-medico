@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Confirmación de Cita')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>✅ ¡Pago realizado exitosamente!</h1>
+    <p>Número de transacción: <strong th:text="${payment.transactionNumber}"></strong>. Su cita ha sido confirmada.</p>
+    <p class="email-notice"> 📧 Se ha enviado un correo de confirmación a su correo electrónico registrado.</p>
+
+
+    <div class="summary-box">
+        <h2>Datos de la Cita</h2>
+        <p><strong>Número de cita:</strong> <span th:text="${appointment.appointmentNumber}"></span></p>
+        <p><strong>Especialidad:</strong> <span th:text="${appointment.branchSpecialty.specialty.name}"></span></p>
+        <p><strong>Sucursal:</strong> <span th:text="${appointment.branchSpecialty.branch.name}"></span></p>
+        <p><strong>Médico:</strong> <span th:text="'Dr(a). ' + ${appointment.doctor.fullName}"></span></p>
+        <p><strong>Fecha y hora:</strong>
+            <span th:text="${#temporals.format(appointment.scheduledAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <p><strong>Monto pagado:</strong> Q<span th:text="${#numbers.formatDecimal(payment.amount, 1, 2)}"></span></p>
+    </div>
+
+    <div class="wizard-actions">
+        <a th:href="@{/paciente/dashboard}" class="btn-secondary">Volver al Portal</a>
+        <a th:href="@{/paciente/citas}" class="btn btn-primary">Ver Mis Citas</a>
+    </div>
+
+</main>
+</body>
+</html>

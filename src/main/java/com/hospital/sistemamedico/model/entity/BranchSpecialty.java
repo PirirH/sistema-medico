@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
+
 @Entity
 @Table(name = "branch_specialty", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"branch_id", "specialty_id"})
@@ -26,4 +29,7 @@ public class BranchSpecialty {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(name = "price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
 }

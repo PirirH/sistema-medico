@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Mis Citas')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Mis Citas</h1>
+
+    <p th:if="${#lists.isEmpty(appointments)}">Todavía no tiene citas agendadas.</p>
+
+    <div class="summary-box" th:each="cita : ${appointments}">
+        <p><strong>Cita:</strong> <span th:text="${cita.appointmentNumber}"></span>
+            — <span th:text="${cita.status.label}"></span></p>
+        <p><strong>Especialidad:</strong> <span th:text="${cita.branchSpecialty.specialty.name}"></span></p>
+        <p><strong>Fecha:</strong> <span th:text="${#temporals.format(cita.scheduledAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+    </div>
+
+    <a th:href="@{/paciente/citas/nueva}" class="btn btn-primary">Agendar Nueva Cita</a>
+</main>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +11,10 @@
     <a th:href="@{/}" class="navbar-brand">🏥 Hospital Central</a>
     <nav>
         <a th:href="@{/}">Inicio</a>
-        <a th:href="@{/login}">Iniciar Sesión</a>
+        <a sec:authorize="!isAuthenticated()" th:href="@{/login}">Iniciar Sesión</a>
+        <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="navbar-logout">
+            <button type="submit" class="btn-link">Cerrar Sesión</button>
+        </form>
     </nav>
 </header>
 </body>

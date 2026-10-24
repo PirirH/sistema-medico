@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Agendar Cita')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Agendar Cita</h1>
+
+    <p th:if="${wizardError}" class="error-text" th:text="${wizardError}"></p>
+
+    <div class="wizard-progress">
+        <span data-step-indicator="1" class="active">1. Especialidad</span>
+        <span data-step-indicator="2">2. Sucursal</span>
+        <span data-step-indicator="3">3. Médico</span>
+        <span data-step-indicator="4">4. Fecha</span>
+        <span data-step-indicator="5">5. Motivo</span>
+    </div>
+
+    <form th:action="@{/paciente/citas/nueva}" th:object="${appointmentForm}" method="post" class="form">
+
+        <!-- Paso 1: Especialidad -->
+        <div class="wizard-step" data-step="1">
+            <label for="specialtyId">Especialidad</label>
+            <select id="specialtyId" th:field="*{specialtyId}">
+                <option value="">-- Seleccione una especialidad --</option>
+                <option th:each="s : ${specialties}" th:value="${s.id}" th:text="${s.name}"></option>
+            </select>
+            <p class="error-text" th:if="${#fields.hasErrors('specialtyId')}" th:errors="*{specialtyId}"></p>
+
+            <div class="wizard-actions">
+                <span></span>
+                <button type="button" class="btn btn-primary" onclick="goToStep(2)">Siguiente</button>
+            </div>
+        </div>
+
+        <!-- Paso 2: Sucursal -->
+        <div class="wizard-step hidden" data-step="2">
+            <label for="branchId">Sucursal</label>
+            <select id="branchId" th:field="*{branchId}">
+                <option value="">-- Seleccione una sucursal --</option>
+                <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+            </select>
+            <p class="error-text" th:if="${#fields.hasErrors('branchId')}" th:errors="*{branchId}"></p>
+
+            <div class="wizard-actions">
+                <button type="button" class="btn btn-secondary" onclick="goToStep(1)">Atrás</button>
+                <button type="button" class="btn btn-primary" onclick="goToStep(3)">Siguiente</button>
+            </div>
+        </div>
+
+        <!-- Paso 3: Médico (depende de especialidad + sucursal) -->
+        <div class="wizard-step hidden" data-step="3">
+            <label for="doctorId">Médico</label>
+            <select id="doctorId" th:field="*{doctorId}">
+                <option value="">-- Seleccione especialidad y sucursal primero --</option>
+            </select>
+            <p class="error-text" th:if="${#fields.hasErrors('doctorId')}" th:errors="*{doctorId}"></p>
+            <p id="doctorEmptyMsg" class="error-text hidden">No hay médicos disponibles para esa combinación.</p>
+
+            <div class="wizard-actions">
+                <button type="button" class="btn btn-secondary" onclick="goToStep(2)">Atrás</button>
+                <button type="button" class="btn btn-primary" onclick="goToStep(4)">Siguiente</button>
+            </div>
+        </div>
+
+        <!-- Paso 4: Fecha y hora (depende de médico) -->
+        <div class="wizard-step hidden" data-step="4">
+            <label for="appointmentDate">Fecha</label>
+            <input type="date" id="appointmentDate" th:field="*{appointmentDate}" th:min="${today}">
+            <p class="error-text" th:if="${#fields.hasErrors('appointmentDate')}" th:errors="*{appointmentDate}"></p>
+
+            <label for="appointmentTime">Horario disponible</label>
+            <select id="appointmentTime" th:field="*{appointmentTime}">
+                <option value="">-- Seleccione una fecha primero --</option>
+            </select>
+            <p class="error-text" th:if="${#fields.hasErrors('appointmentTime')}" th:errors="*{appointmentTime}"></p>
+            <p id="slotsEmptyMsg" class="error-text hidden">No hay horarios disponibles ese día. Intente con otra fecha.</p>
+
+            <div class="wizard-actions">
+                <button type="button" class="btn btn-secondary" onclick="goToStep(3)">Atrás</button>
+                <button type="button" class="btn btn-primary" onclick="goToStep(5)">Siguiente</button>
+            </div>
+        </div>
+
+        <!-- Paso 5: Motivo y confirmación -->
+        <div class="wizard-step hidden" data-step="5">
+            <label for="reason">Motivo de la consulta</label>
+            <textarea id="reason" th:field="*{reason}" maxlength="2000"></textarea>
+            <p class="counter"><span id="reasonCount">0</span>/2000 caracteres (mínimo 10)</p>
+            <p class="error-text" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
+
+            <div class="summary-box" id="summaryBox">
+                <p><strong>Especialidad:</strong> <span id="summarySpecialty">-</span></p>
+                <p><strong>Sucursal:</strong> <span id="summaryBranch">-</span></p>
+                <p><strong>Médico:</strong> <span id="summaryDoctor">-</span></p>
+                <p><strong>Fecha y hora:</strong> <span id="summaryDateTime">-</span></p>
+            </div>
+
+            <div class="wizard-actions">
+                <button type="button" class="btn btn-secondary" onclick="goToStep(4)">Atrás</button>
+                <button type="submit" class="btn btn-primary">Confirmar Cita</button>
+            </div>
+        </div>
+
+    </form>
+</main>
+
+<script th:inline="javascript">
+    const medicosUrl = /*[[@{/paciente/citas/api/medicos}]]*/ '';
+    const horariosUrl = /*[[@{/paciente/citas/api/horarios}]]*/ '';
+
+    function goToStep(step) {
+        document.querySelectorAll('.wizard-step').forEach(el => el.classList.add('hidden'));
+        document.querySelector('[data-step="' + step + '"]').classList.remove('hidden');
+
+        document.querySelectorAll('[data-step-indicator]').forEach(el => el.classList.remove('active'));
+        document.querySelector('[data-step-indicator="' + step + '"]').classList.add('active');
+
+        if (step === 3) loadDoctors();
+        if (step === 5) fillSummary();
+    }
+
+    function loadDoctors() {
+        const branchId = document.getElementById('branchId').value;
+        const specialtyId = document.getElementById('specialtyId').value;
+        const select = document.getElementById('doctorId');
+        const emptyMsg = document.getElementById('doctorEmptyMsg');
+
+        select.innerHTML = '<option value="">-- Cargando... --</option>';
+        emptyMsg.classList.add('hidden');
+
+        fetch(medicosUrl + '?branchId=' + branchId + '&specialtyId=' + specialtyId)
+            .then(response => response.json())
+            .then(doctors => {
+                select.innerHTML = '<option value="">-- Seleccione un médico --</option>';
+                doctors.forEach(doc => {
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = doc.label;
+                    select.appendChild(option);
+                });
+                if (doctors.length === 0) emptyMsg.classList.remove('hidden');
+            });
+    }
+
+    document.getElementById('appointmentDate').addEventListener('change', loadHorarios);
+
+    function loadHorarios() {
+        const doctorId = document.getElementById('doctorId').value;
+        const fecha = document.getElementById('appointmentDate').value;
+        const select = document.getElementById('appointmentTime');
+        const emptyMsg = document.getElementById('slotsEmptyMsg');
+
+        if (!doctorId || !fecha) return;
+
+        select.innerHTML = '<option value="">-- Cargando... --</option>';
+        emptyMsg.classList.add('hidden');
+
+        fetch(horariosUrl + '?doctorId=' + doctorId + '&fecha=' + fecha)
+            .then(response => response.json())
+            .then(slots => {
+                select.innerHTML = '<option value="">-- Seleccione un horario --</option>';
+                slots.forEach(slot => {
+                    const hhmm = slot.substring(0, 5);
+                    const option = document.createElement('option');
+                    option.value = hhmm;
+                    option.textContent = hhmm;
+                    select.appendChild(option);
+                });
+                if (slots.length === 0) emptyMsg.classList.remove('hidden');
+            });
+    }
+
+    document.getElementById('reason').addEventListener('input', function () {
+        document.getElementById('reasonCount').textContent = this.value.length;
+    });
+
+    function fillSummary() {
+        document.getElementById('summarySpecialty').textContent =
+            document.getElementById('specialtyId').selectedOptions[0]?.text ?? '-';
+        document.getElementById('summaryBranch').textContent =
+            document.getElementById('branchId').selectedOptions[0]?.text ?? '-';
+        document.getElementById('summaryDoctor').textContent =
+            document.getElementById('doctorId').selectedOptions[0]?.text ?? '-';
+        document.getElementById('summaryDateTime').textContent =
+            document.getElementById('appointmentDate').value + ' ' + document.getElementById('appointmentTime').value;
+    }
+</script>
+</body>
+</html>

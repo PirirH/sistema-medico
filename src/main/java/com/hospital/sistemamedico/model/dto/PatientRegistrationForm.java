@@ -30,7 +30,7 @@ public class PatientRegistrationForm {
     private String email;
 
     // RN-CU02-03 (opcional)
-    @Size(min = 5, max = 50, message = "El número de seguro debe contener entre 5 y 50 caracteres.")
+    @Pattern(regexp = "^$|.{5,50}$", message = "El número de seguro debe contener entre 5 y 50 caracteres.")
     private String insuranceNumber;
 
     // RN-CU02-05

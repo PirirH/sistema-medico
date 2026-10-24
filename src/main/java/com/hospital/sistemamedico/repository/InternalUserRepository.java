@@ -3,6 +3,7 @@ package com.hospital.sistemamedico.repository;
 import com.hospital.sistemamedico.model.entity.InternalUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface InternalUserRepository extends JpaRepository<InternalUser, Integer> {
@@ -14,4 +15,7 @@ public interface InternalUserRepository extends JpaRepository<InternalUser, Inte
     boolean existsByDpi(String dpi);
 
     boolean existsByUsername(String username);
+
+    List<InternalUser>findByRole_NameAndBranch_IdAndSpecialty_IdAndActiveTrue(
+            String roleName, Integer branchId, Integer specialtyId);
 }
