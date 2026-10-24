@@ -9,5 +9,5 @@ public interface ReceptionService {
 
     Appointment registerArrival(Integer appointmentId, Long expectedVersion);
 
-    Appointment reassignDoctor(Integer appointmentId, Integer newDoctorId);
+    Appointment reassignDoctor(Integer appointmentId, Integer newDoctorId, String note);
 }

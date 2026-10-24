@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Registrar Cobro')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Registrar Cobro</h1>
+
+    <div class="summary-box">
+        <p><strong>Cita:</strong> <span th:text="${appointment.appointmentNumber}"></span></p>
+        <p><strong>Paciente:</strong> <span th:text="${appointment.patient.fullName}"></span></p>
+        <p><strong>Especialidad:</strong> <span th:text="${appointment.branchSpecialty.specialty.name}"></span></p>
+        <p><strong>Médico:</strong> <span th:text="'Dr(a). ' + ${appointment.doctor.fullName}"></span></p>
+        <p><strong>Fecha y hora:</strong>
+            <span th:text="${#temporals.format(appointment.scheduledAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <p><strong>Monto total a cobrar:</strong>
+            Q<span th:text="${#numbers.formatDecimal(appointment.totalAmount, 1, 2)}"></span></p>
+    </div>
+
+    <p th:if="${chargeError}" class="error-text" th:text="${chargeError}"></p>
+    <p th:if="${rejectionMessage}" class="error-text" th:text="${rejectionMessage}"></p>
+
+    <form th:action="@{'/admin/caja/' + ${appointment.id} + '/cobrar'}"
+          th:object="${cashierForm}" method="post" class="form">
+
+        <input type="hidden" th:field="*{method}">
+        <input type="hidden" th:field="*{cardBrand}">
+
+        <label for="paymentOption">Método de pago</label>
+        <select id="paymentOption">
+            <option value="">-- Seleccione --</option>
+            <option value="EFECTIVO|">Efectivo</option>
+            <option value="TARJETA_CREDITO|Visa">Visa</option>
+            <option value="TARJETA_CREDITO|Mastercard">Mastercard</option>
+            <option value="TARJETA_DEBITO|Débito">Débito</option>
+        </select>
+        <p class="error-text" th:if="${#fields.hasErrors('method')}" th:errors="*{method}"></p>
+
+        <div id="cashFields" class="hidden">
+            <label for="amountReceived">Monto recibido (Q)</label>
+            <input type="number" step="0.01" min="0" th:field="*{amountReceived}">
+            <p class="error-text" th:if="${#fields.hasErrors('amountReceived')}" th:errors="*{amountReceived}"></p>
+        </div>
+
+        <div id="cardFields" class="hidden">
+            <label for="cardLastFour">Últimos 4 dígitos de la tarjeta</label>
+            <input type="text" th:field="*{cardLastFour}" maxlength="4"
+                   pattern="[0-9]{4}" inputmode="numeric">
+        </div>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/caja/buscar}" class="btn btn-secondary">Volver</a>
+            <button type="submit" class="btn btn-primary">Registrar Pago</button>
+        </div>
+    </form>
+</main>
+
+<script>
+    const select = document.getElementById('paymentOption');
+    const methodInput = document.getElementById('method');
+    const brandInput = document.getElementById('cardBrand');
+    const cashFields = document.getElementById('cashFields');
+    const cardFields = document.getElementById('cardFields');
+
+    function applyOption() {
+        const parts = select.value.split('|');
+        const method = parts[0] || '';
+        methodInput.value = method;
+        brandInput.value = parts[1] || '';
+        cashFields.classList.toggle('hidden', method !== 'EFECTIVO');
+        cardFields.classList.toggle('hidden', method === '' || method === 'EFECTIVO');
+    }
+
+    // Si la página se recarga con un error, recupera la opción que el cajero había elegido.
+    const previous = methodInput.value + '|' + brandInput.value;
+    if (methodInput.value) select.value = previous;
+
+    select.addEventListener('change', applyOption);
+    applyOption();
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Recepción')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Recepción</h1>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+
+    <div class="toggle-group">
+        <button type="button" id="modeDpi" class="btn btn-secondary">Por DPI</button>
+        <button type="button" id="modeNumero" class="btn btn-secondary">Por No. Cita</button>
+    </div>
+
+    <form th:action="@{/admin/recepcion/buscar}" method="post" class="form">
+        <div id="dpiField">
+            <label for="dpi">DPI del paciente</label>
+            <input type="text" id="dpi" name="dpi" th:value="${dpi}" maxlength="13"
+                   pattern="[0-9]{13}" inputmode="numeric" placeholder="13 dígitos">
+        </div>
+        <div id="numeroField" class="hidden">
+            <label for="numero">Número de cita</label>
+            <input type="text" id="numero" name="numero" th:value="${numero}" placeholder="CIT-2026-000001">
+        </div>
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+
+    <div class="action-row">
+        <a th:href="@{/admin/recepcion/nueva(emergency=true)}" class="btn btn-secondary">Registrar emergencia</a>
+        <a th:href="@{/admin/recepcion/nueva}" class="btn btn-secondary">Nueva cita (Walk-in)</a>
+    </div>
+
+    <p th:if="${searchError}" class="error-text" th:text="${searchError}"></p>
+
+    <!-- FA03: el paciente no existe -->
+    <div th:if="${outcome == 'PACIENTE_NO_REGISTRADO'}" class="notice notice-error">
+        <p><strong>No se encontró ningún paciente con ese DPI.</strong></p>
+        <p>Es necesario registrar al paciente antes de continuar.</p>
+        <a th:href="@{/registro(dpi=${dpi})}" class="btn btn-primary">Registrar Paciente</a>
+    </div>
+
+    <!-- FA04: el paciente existe pero no tiene citas activas -->
+    <div th:if="${outcome == 'PACIENTE_SIN_CITAS_ACTIVAS'}" class="notice">
+        <p><strong th:text="'El paciente ' + ${patientName} + ' está registrado pero no tiene citas activas.'"></strong></p>
+        <p>Puede crear una nueva cita para este paciente.</p>
+        <a th:href="@{/admin/recepcion/nueva(dpi=${dpi})}" class="btn btn-primary">Nueva Cita (Walk-in)</a>
+    </div>
+
+    <p th:if="${arrivalSuccess}" class="notice notice-success" th:text="${arrivalSuccess}"></p>
+    <p th:if="${arrivalError}" class="notice notice-error" th:text="${arrivalError}"></p>
+
+    <!-- Tarjeta de la cita encontrada -->
+    <div th:if="${outcome == 'CITA_ENCONTRADA'}" class="summary-box">
+        <p>
+            <strong th:text="${appointment.patient.fullName}"></strong>
+            <span class="badge badge-EMERGENCIA"
+                  th:if="${appointment.priority.name() == 'EMERGENCIA'}">EMERGENCIA</span>
+        </p>
+        <p><strong>Estado:</strong>
+            <span class="badge" th:classappend="'badge-' + ${appointment.status.name()}"
+                  th:text="${appointment.status.label}"></span></p>
+        <p><strong>Prioridad:</strong>
+            <span th:text="${appointment.priority.name() == 'EMERGENCIA'} ? 'Emergencia' : 'Normal'"></span></p>
+        <p><strong>Número de cita:</strong> <span th:text="${appointment.appointmentNumber}"></span></p>
+        <p><strong>Especialidad:</strong> <span th:text="${appointment.branchSpecialty.specialty.name}"></span></p>
+        <p><strong>Sucursal:</strong> <span th:text="${appointment.branchSpecialty.branch.name}"></span></p>
+        <p><strong>Médico:</strong> <span th:text="'Dr(a). ' + ${appointment.doctor.fullName}"></span></p>
+        <p><strong>Fecha y hora:</strong>
+            <span th:text="${#temporals.format(appointment.scheduledAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <p><strong>Motivo de consulta:</strong> <span th:text="${appointment.reason}"></span></p>
+        <p th:if="${appointment.arrivalTime != null}"><strong>Hora de llegada:</strong>
+            <span th:text="${#temporals.format(appointment.arrivalTime, 'dd/MM/yyyy HH:mm')}"></span></p>
+
+        <!-- FA05: pendiente de pago -->
+        <div th:if="${appointment.status.name() == 'PENDIENTE_PAGO'}" class="notice">
+            La cita del paciente tiene estado 'Pendiente de pago'. Debe realizar el pago en caja antes de ser atendido.
+        </div>
+
+        <!-- FA06: cancelada -->
+        <div th:if="${appointment.status.name() == 'CANCELADA'}" class="notice notice-error">
+            <p>La cita fue cancelada. El paciente debe agendar una nueva cita.</p>
+            <a th:href="@{/admin/recepcion/nueva(dpi=${appointment.patient.dpi})}" class="btn btn-primary">Nueva Cita</a>
+        </div>
+
+        <!-- Llegada ya registrada -->
+        <div th:if="${appointment.status.name() == 'PACIENTE_PRESENTE'}" class="notice notice-success">
+            Llegada registrada — esperando llamado de enfermería
+        </div>
+
+        <div class="action-row">
+            <form th:if="${appointment.status.name() == 'CONFIRMADA'}"
+                  th:action="@{'/admin/recepcion/' + ${appointment.id} + '/llegada'}"
+                  method="post" class="inline-form">
+                <input type="hidden" name="version" th:value="${appointment.version}">
+                <button type="submit" class="btn btn-primary">Registrar llegada</button>
+            </form>
+
+            <a th:if="${appointment.status.name() == 'CONFIRMADA' or appointment.status.name() == 'PACIENTE_PRESENTE'}"
+               th:href="@{'/admin/recepcion/' + ${appointment.id} + '/reasignar'}"
+               class="btn btn-secondary">Reasignar Médico</a>
+
+            <!-- FA08: el flujo de signos vitales pertenece a CU-07 (aún no construido) -->
+            <button type="button" class="btn btn-secondary" disabled
+                    title="Se habilita cuando se construya CU-07"
+                    th:if="${appointment.priority.name() == 'EMERGENCIA' and (appointment.status.name() == 'CONFIRMADA' or appointment.status.name() == 'PACIENTE_PRESENTE')}">
+                Signos Vitales (Urgente)
+            </button>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    const initialMode = /*[[${searchMode}]]*/ 'dpi';
+    const dpiField = document.getElementById('dpiField');
+    const numeroField = document.getElementById('numeroField');
+    const modeDpi = document.getElementById('modeDpi');
+    const modeNumero = document.getElementById('modeNumero');
+
+    function setMode(mode) {
+        const byDpi = mode === 'dpi';
+        dpiField.classList.toggle('hidden', !byDpi);
+        numeroField.classList.toggle('hidden', byDpi);
+        modeDpi.classList.toggle('toggle-active', byDpi);
+        modeNumero.classList.toggle('toggle-active', !byDpi);
+        // Solo se envía el campo del modo activo.
+        if (byDpi) { document.getElementById('numero').value = ''; }
+        else { document.getElementById('dpi').value = ''; }
+    }
+
+    modeDpi.addEventListener('click', () => setMode('dpi'));
+    modeNumero.addEventListener('click', () => setMode('numero'));
+
+    // Al iniciar no se borra nada: se muestra el campo del modo con el valor que ya trae.
+    dpiField.classList.toggle('hidden', initialMode !== 'dpi');
+    numeroField.classList.toggle('hidden', initialMode === 'dpi');
+    modeDpi.classList.toggle('toggle-active', initialMode === 'dpi');
+    modeNumero.classList.toggle('toggle-active', initialMode !== 'dpi');
+</script>
+</body>
+</html>

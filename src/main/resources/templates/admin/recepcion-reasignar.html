@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Reasignar Médico')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Reasignar Médico</h1>
+
+    <div class="summary-box">
+        <p><strong>Paciente:</strong> <span th:text="${appointment.patient.fullName}"></span></p>
+        <p><strong>Cita:</strong> <span th:text="${appointment.appointmentNumber}"></span></p>
+        <p><strong>Fecha y hora:</strong>
+            <span th:text="${#temporals.format(appointment.scheduledAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <p><strong>Especialidad:</strong> <span th:text="${appointment.branchSpecialty.specialty.name}"></span></p>
+        <p><strong>Sede:</strong> <span th:text="${appointment.branchSpecialty.branch.name}"></span></p>
+        <p><strong>Médico actual:</strong> <span th:text="'Dr(a). ' + ${appointment.doctor.fullName}"></span></p>
+    </div>
+
+    <p th:if="${reassignError}" class="error-text" th:text="${reassignError}"></p>
+    <p th:if="${#lists.isEmpty(doctors)}" class="error-text">
+        No hay otros médicos disponibles en esta sede y especialidad.
+    </p>
+
+    <form th:action="@{'/admin/recepcion/' + ${appointment.id} + '/reasignar'}" method="post" class="form">
+        <label for="newDoctorId">Nuevo médico</label>
+        <select id="newDoctorId" name="newDoctorId" required>
+            <option value="">-- Seleccione un médico --</option>
+            <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.label}"></option>
+        </select>
+
+        <label for="note">Motivo de la reasignación (opcional)</label>
+        <textarea id="note" name="note" maxlength="300"></textarea>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/recepcion/buscar}" class="btn btn-secondary">Volver</a>
+            <button type="submit" class="btn btn-primary">Confirmar Reasignación</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

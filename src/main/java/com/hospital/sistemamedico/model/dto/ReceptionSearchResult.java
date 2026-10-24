@@ -15,5 +15,10 @@ public class ReceptionSearchResult {
     }
 
     private Outcome outcome;
-    private Appointment appointment; // solo tiene valor cuando outcome == CITA_ENCONTRADA
+
+    /** Solo tiene valor cuando outcome == CITA_ENCONTRADA. */
+    private Appointment appointment;
+
+    /** Solo tiene valor cuando outcome == PACIENTE_SIN_CITAS_ACTIVAS. */
+    private String patientName;
 }

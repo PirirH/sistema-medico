@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Comprobante de Pago')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <div class="no-print">
+        <h1>✅ ¡Pago registrado exitosamente!</h1>
+        <p>Paciente: <strong th:text="${appointment.patient.fullName}"></strong>.
+           La cita ha sido actualizada a estado Confirmada.</p>
+        <p th:if="${payment.changeGiven != null}">
+            Monto recibido: Q<span th:text="${#numbers.formatDecimal(payment.amountReceived, 1, 2)}"></span>.
+            Cambio a devolver: Q<span th:text="${#numbers.formatDecimal(payment.changeGiven, 1, 2)}"></span>.
+        </p>
+    </div>
+
+    <div class="summary-box">
+        <h2>Comprobante de Pago</h2>
+        <p><strong>Número de transacción:</strong> <span th:text="${payment.transactionNumber}"></span></p>
+        <p><strong>Paciente:</strong> <span th:text="${appointment.patient.fullName}"></span></p>
+        <p><strong>Fecha y hora:</strong>
+            <span th:text="${#temporals.format(payment.paidAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <p><strong>Forma de pago:</strong>
+            <span th:text="${payment.method.label}"></span>
+            <span th:if="${payment.cardLastFour != null}"
+                  th:text="'terminada en ' + ${payment.cardLastFour}"></span>
+            <span th:if="${payment.cardBrand != null and payment.method.name() == 'TARJETA_CREDITO'}"
+                  th:text="'(' + ${payment.cardBrand} + ')'"></span>
+        </p>
+        <p><strong>Monto pagado:</strong> Q<span th:text="${#numbers.formatDecimal(payment.amount, 1, 2)}"></span></p>
+
+        <h2>Detalle de la cita</h2>
+        <p><strong>Número de cita:</strong> <span th:text="${appointment.appointmentNumber}"></span></p>
+        <p><strong>Sucursal:</strong> <span th:text="${appointment.branchSpecialty.branch.name}"></span></p>
+        <p><strong>Especialidad:</strong> <span th:text="${appointment.branchSpecialty.specialty.name}"></span></p>
+        <p><strong>Médico:</strong> <span th:text="'Dr(a). ' + ${appointment.doctor.fullName}"></span></p>
+        <p><strong>Fecha y hora de la cita:</strong>
+            <span th:text="${#temporals.format(appointment.scheduledAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+    </div>
+
+    <div class="wizard-actions no-print">
+        <button type="button" class="btn btn-secondary" onclick="window.print()">Imprimir Comprobante</button>
+        <a th:href="@{/admin/caja/buscar}" class="btn btn-primary">Nuevo Cobro</a>
+    </div>
+</main>
+</body>
+</html>

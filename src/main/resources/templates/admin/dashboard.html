@@ -1,12 +1,19 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Mi Cuenta')}"></head>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Panel Administrativo')}"></head>
 <body>
 <header th:replace="~{fragments/layout :: navbar}"></header>
 
 <main class="container">
-    <h1>Bienvenido(a), <span th:text="${fullName}">Paciente</span></h1>
-    <a th:href="@{/paciente/citas/nueva}" class="btn btn-primary">Agendar Cita</a>
+    <h1>Panel Administrativo</h1>
+    <p>Bienvenido(a), <span th:text="${fullName}">Usuario</span>.</p>
+
+    <div class="dashboard-actions">
+        <a sec:authorize="hasAnyRole('RECEPCIONISTA','ADMINISTRADOR')"
+           th:href="@{/admin/recepcion/buscar}" class="btn btn-primary">Recepción</a>
+        <a sec:authorize="hasAnyRole('CAJERO','ADMINISTRADOR')"
+           th:href="@{/admin/caja/buscar}" class="btn btn-primary">Cobro en Caja</a>
+    </div>
 </main>
 </body>
 </html>

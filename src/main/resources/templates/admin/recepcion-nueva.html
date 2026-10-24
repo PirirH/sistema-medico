@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Nueva Cita en Recepción')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Nueva cita en recepción</h1>
+
+    <p th:if="${walkInError}" class="error-text" th:text="${walkInError}"></p>
+
+    <form th:action="@{/admin/recepcion/nueva}" th:object="${walkInForm}" method="post" class="form"
+          id="walkInForm" th:attr="data-doctor=${walkInForm.doctorId}, data-time=${walkInForm.appointmentTime}">
+
+        <label for="patientDpi">DPI del paciente</label>
+        <input type="text" th:field="*{patientDpi}" maxlength="13" pattern="[0-9]{13}" inputmode="numeric">
+        <p class="error-text" th:if="${#fields.hasErrors('patientDpi')}" th:errors="*{patientDpi}"></p>
+
+        <label class="checkbox-row">
+            <input type="checkbox" th:field="*{emergency}">
+            Es una emergencia (pasa directo a signos vitales, sin esperar pago ni horario)
+        </label>
+
+        <label for="specialtyId">Especialidad</label>
+        <select th:field="*{specialtyId}">
+            <option value="">-- Seleccione una especialidad --</option>
+            <option th:each="s : ${specialties}" th:value="${s.id}" th:text="${s.name}"></option>
+        </select>
+        <p class="error-text" th:if="${#fields.hasErrors('specialtyId')}" th:errors="*{specialtyId}"></p>
+
+        <label for="branchId">Sucursal</label>
+        <select th:field="*{branchId}">
+            <option value="">-- Seleccione una sucursal --</option>
+            <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+        </select>
+        <p class="error-text" th:if="${#fields.hasErrors('branchId')}" th:errors="*{branchId}"></p>
+
+        <label for="doctorId">Médico</label>
+        <select th:field="*{doctorId}">
+            <option value="">-- Seleccione especialidad y sucursal primero --</option>
+        </select>
+        <p id="doctorEmptyMsg" class="error-text hidden">No hay médicos disponibles para esa combinación.</p>
+        <p class="error-text" th:if="${#fields.hasErrors('doctorId')}" th:errors="*{doctorId}"></p>
+
+        <div id="scheduleFields">
+            <label for="appointmentDate">Fecha</label>
+            <input type="date" th:field="*{appointmentDate}" th:min="${today}">
+
+            <label for="appointmentTime">Horario disponible</label>
+            <select th:field="*{appointmentTime}">
+                <option value="">-- Seleccione una fecha primero --</option>
+            </select>
+            <p id="slotsEmptyMsg" class="error-text hidden">No hay horarios disponibles ese día. Intente con otra fecha.</p>
+        </div>
+
+        <label for="reason">Motivo de la consulta</label>
+        <textarea th:field="*{reason}" maxlength="2000"></textarea>
+        <p class="error-text" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/recepcion/buscar}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Registrar</button>
+        </div>
+    </form>
+</main>
+
+<script th:inline="javascript">
+    const medicosUrl = /*[[@{/admin/recepcion/api/medicos}]]*/ '';
+    const horariosUrl = /*[[@{/admin/recepcion/api/horarios}]]*/ '';
+
+    const form = document.getElementById('walkInForm');
+    const specialty = document.getElementById('specialtyId');
+    const branch = document.getElementById('branchId');
+    const doctor = document.getElementById('doctorId');
+    const dateInput = document.getElementById('appointmentDate');
+    const timeSelect = document.getElementById('appointmentTime');
+    const emergency = document.getElementById('emergency1') || document.querySelector('input[name="emergency"][type="checkbox"]');
+    const scheduleFields = document.getElementById('scheduleFields');
+    const doctorEmptyMsg = document.getElementById('doctorEmptyMsg');
+    const slotsEmptyMsg = document.getElementById('slotsEmptyMsg');
+
+    function toggleSchedule() {
+        scheduleFields.classList.toggle('hidden', emergency.checked);
+    }
+
+    function loadDoctors(preselected) {
+        doctorEmptyMsg.classList.add('hidden');
+        if (!specialty.value || !branch.value) {
+            doctor.innerHTML = '<option value="">-- Seleccione especialidad y sucursal primero --</option>';
+            return;
+        }
+        doctor.innerHTML = '<option value="">-- Cargando... --</option>';
+        fetch(medicosUrl + '?branchId=' + branch.value + '&specialtyId=' + specialty.value)
+            .then(r => r.json())
+            .then(doctors => {
+                doctor.innerHTML = '<option value="">-- Seleccione un médico --</option>';
+                doctors.forEach(d => {
+                    const o = document.createElement('option');
+                    o.value = d.id;
+                    o.textContent = d.label;
+                    doctor.appendChild(o);
+                });
+                if (doctors.length === 0) doctorEmptyMsg.classList.remove('hidden');
+                if (preselected) doctor.value = preselected;
+                if (dateInput.value && doctor.value) loadSlots(form.dataset.time);
+            });
+    }
+
+    function loadSlots(preselected) {
+        slotsEmptyMsg.classList.add('hidden');
+        if (!doctor.value || !dateInput.value) return;
+        timeSelect.innerHTML = '<option value="">-- Cargando... --</option>';
+        fetch(horariosUrl + '?doctorId=' + doctor.value + '&fecha=' + dateInput.value)
+            .then(r => r.json())
+            .then(slots => {
+                timeSelect.innerHTML = '<option value="">-- Seleccione un horario --</option>';
+                slots.forEach(s => {
+                    const hhmm = s.substring(0, 5);
+                    const o = document.createElement('option');
+                    o.value = hhmm;
+                    o.textContent = hhmm;
+                    timeSelect.appendChild(o);
+                });
+                if (slots.length === 0) slotsEmptyMsg.classList.remove('hidden');
+                if (preselected) timeSelect.value = preselected;
+            });
+    }
+
+    specialty.addEventListener('change', () => loadDoctors());
+    branch.addEventListener('change', () => loadDoctors());
+    doctor.addEventListener('change', () => loadSlots());
+    dateInput.addEventListener('change', () => loadSlots());
+    emergency.addEventListener('change', toggleSchedule);
+
+    // Si la página se recarga con errores, recupera la selección anterior.
+    toggleSchedule();
+    if (specialty.value && branch.value) loadDoctors(form.dataset.doctor);
+</script>
+</body>
+</html>

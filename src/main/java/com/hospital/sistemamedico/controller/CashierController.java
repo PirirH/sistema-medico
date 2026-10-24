@@ -25,6 +25,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CashierController {
 
+    private static final String CARD_REJECTED_MESSAGE =
+            "La transacción con tarjeta fue rechazada por el banco. Solicite al paciente otro método de pago.";
+
     private final CashierService cashierService;
     private final AppointmentRepository appointmentRepository;
     private final PaymentRepository paymentRepository;
@@ -38,6 +41,8 @@ public class CashierController {
     public String search(@RequestParam(required = false) String numero,
                          @RequestParam(required = false) String dpi,
                          Model model) {
+        model.addAttribute("numero", numero);
+        model.addAttribute("dpi", dpi);
         try {
             List<Appointment> results = cashierService.searchPendingAppointments(numero, dpi);
             model.addAttribute("results", results);
@@ -49,8 +54,7 @@ public class CashierController {
 
     @GetMapping("/{id}/cobrar")
     public String showChargeForm(@PathVariable Integer id, Model model) {
-        Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new BusinessRuleException("Cita no encontrada."));
+        Appointment appointment = loadAppointment(id);
 
         if (appointment.getStatus() != AppointmentStatus.PENDIENTE_PAGO) {
             throw new BusinessRuleException("Esta cita ya no está pendiente de pago.");
@@ -68,8 +72,7 @@ public class CashierController {
                                @AuthenticationPrincipal AppUserPrincipal principal,
                                Model model) {
 
-        Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new BusinessRuleException("Cita no encontrada."));
+        Appointment appointment = loadAppointment(id);
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("appointment", appointment);
@@ -84,8 +87,7 @@ public class CashierController {
             }
 
             model.addAttribute("appointment", appointment);
-            model.addAttribute("rejectionMessage",
-                    "El pago con tarjeta fue rechazado por el banco. Intente con otra tarjeta o efectivo.");
+            model.addAttribute("rejectionMessage", CARD_REJECTED_MESSAGE);
             return "admin/caja-cobrar";
 
         } catch (BusinessRuleException ex) {
@@ -97,8 +99,7 @@ public class CashierController {
 
     @GetMapping("/{id}/recibo")
     public String showReceipt(@PathVariable Integer id, Model model) {
-        Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new BusinessRuleException("Cita no encontrada."));
+        Appointment appointment = loadAppointment(id);
 
         Payment payment = paymentRepository.findByAppointmentIdOrderByCreatedAtDesc(id)
                 .stream()
@@ -109,5 +110,10 @@ public class CashierController {
         model.addAttribute("appointment", appointment);
         model.addAttribute("payment", payment);
         return "admin/caja-recibo";
+    }
+
+    private Appointment loadAppointment(Integer id) {
+        return appointmentRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new BusinessRuleException("Cita no encontrada."));
     }
 }

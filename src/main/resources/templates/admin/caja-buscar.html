@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Cobro en Caja')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Cobro en Caja</h1>
+
+    <form th:action="@{/admin/caja/buscar}" method="post" class="form">
+        <label for="numero">Número de cita</label>
+        <input type="text" id="numero" name="numero" th:value="${numero}" placeholder="CIT-2026-000001">
+
+        <label for="dpi">DPI del paciente</label>
+        <input type="text" id="dpi" name="dpi" th:value="${dpi}" maxlength="13"
+               pattern="[0-9]{13}" inputmode="numeric" placeholder="13 dígitos">
+
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+
+    <p th:if="${searchError}" class="error-text" th:text="${searchError}"></p>
+
+    <div th:if="${results != null}">
+        <div class="summary-box" th:each="cita : ${results}">
+            <p><strong>Cita:</strong> <span th:text="${cita.appointmentNumber}"></span></p>
+            <p><strong>Paciente:</strong> <span th:text="${cita.patient.fullName}"></span></p>
+            <p><strong>Especialidad:</strong> <span th:text="${cita.branchSpecialty.specialty.name}"></span></p>
+            <p><strong>Médico:</strong> <span th:text="'Dr(a). ' + ${cita.doctor.fullName}"></span></p>
+            <p><strong>Fecha y hora:</strong>
+                <span th:text="${#temporals.format(cita.scheduledAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+            <p><strong>Monto a cobrar:</strong> Q<span th:text="${#numbers.formatDecimal(cita.totalAmount, 1, 2)}"></span></p>
+            <a th:href="@{'/admin/caja/' + ${cita.id} + '/cobrar'}" class="btn btn-primary">Cobrar</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

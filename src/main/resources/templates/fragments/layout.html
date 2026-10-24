@@ -11,6 +11,8 @@
     <a th:href="@{/}" class="navbar-brand">🏥 Hospital Central</a>
     <nav>
         <a th:href="@{/}">Inicio</a>
+        <a sec:authorize="hasRole('PACIENTE')" th:href="@{/paciente/dashboard}">Mi Cuenta</a>
+        <a sec:authorize="isAuthenticated() and !hasRole('PACIENTE')" th:href="@{/admin/dashboard}">Mi Panel</a>
         <a sec:authorize="!isAuthenticated()" th:href="@{/login}">Iniciar Sesión</a>
         <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="navbar-logout">
             <button type="submit" class="btn-link">Cerrar Sesión</button>

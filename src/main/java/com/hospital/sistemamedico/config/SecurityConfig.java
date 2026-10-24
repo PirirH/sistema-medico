@@ -41,8 +41,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/registro/**", "/verificar-dpi", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/login").permitAll()
-                        .requestMatchers("/admin/recepcion/**").hasAnyRole("RECEPCIONISTA", "ADMINISTRADOR")
+                        // Reglas específicas ANTES de la general de /admin/**: Spring usa la primera que coincide.
                         .requestMatchers("/admin/caja/**").hasAnyRole("CAJERO", "ADMINISTRADOR")
+                        .requestMatchers("/admin/recepcion/**").hasAnyRole("RECEPCIONISTA", "ADMINISTRADOR")
                         .requestMatchers("/admin/**").hasAnyRole(
                                 "ADMINISTRADOR", "RECEPCIONISTA", "CAJERO", "MEDICO",
                                 "ENFERMERO", "LABORATORISTA", "FARMACEUTICO")
