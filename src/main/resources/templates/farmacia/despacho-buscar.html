@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Despacho de Medicamentos')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Despacho de Medicamentos</h1>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+
+    <form th:action="@{/admin/farmacia/despachos/buscar}" method="post" class="form">
+        <label for="receta">Número de receta</label>
+        <input type="text" id="receta" name="receta" th:value="${receta}" placeholder="RX-2026-000001">
+        <label for="consulta">Número de consulta (ID)</label>
+        <input type="text" id="consulta" name="consulta" th:value="${consulta}" inputmode="numeric">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+
+    <p th:if="${searchError}" class="error-text" th:text="${searchError}"></p>
+
+    <div th:if="${results != null}">
+        <div class="summary-box" th:each="r : ${results}">
+            <p><strong>Receta:</strong> <span th:text="${r.prescription.prescriptionNumber}"></span>
+                <span class="badge" th:text="${r.prescription.status.label}"></span></p>
+            <p><strong>Paciente:</strong> <span th:text="${r.prescription.patient.fullName}"></span></p>
+            <p><strong>Médico:</strong> <span th:text="'Dr(a). ' + ${r.prescription.doctor.fullName}"></span></p>
+            <p><strong>Emitida:</strong> <span th:text="${#temporals.format(r.prescription.createdAt, 'dd/MM/yyyy')}"></span>
+               (hace <span th:text="${r.daysSinceIssued}"></span> días)</p>
+            <p class="error-text" th:if="${r.expired}">Receta vencida (más de 7 días desde su emisión).</p>
+            <a th:unless="${r.expired}" th:href="@{/admin/farmacia/despachos/receta/{id}(id=${r.prescription.id})}"
+               class="btn btn-primary">Despachar</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

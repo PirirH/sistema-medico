@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Catálogos del Sistema')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Catálogos del Sistema</h1>
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+
+    <div class="dashboard-actions">
+        <a th:each="c : ${catalogs}" th:href="@{/admin/catalogos/{k}(k=${c.key})}" class="btn btn-primary" th:text="${c.title}"></a>
+        <a th:href="@{/admin/sedes-especialidades}" class="btn btn-primary">Sucursal-Especialidad</a>
+    </div>
+    <p class="muted">Los estados de cita son fijos del sistema (no se administran como catálogo).</p>
+</main>
+</body>
+</html>

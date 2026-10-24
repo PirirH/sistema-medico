@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<!-- Acciones de la consulta (CU-08 / CU-12). La Fase 4 reemplaza este archivo para añadir
-     "Generar orden de laboratorio" y "Generar receta médica". -->
+<!-- Acciones de la consulta (CU-08 / CU-12). Versión Fase 4: añade orden de laboratorio, receta y resultados. -->
 <div th:fragment="acciones(id)" class="action-row">
+    <a th:href="@{/admin/medico/citas/{id}/orden-lab(id=${id})}" class="btn btn-secondary">Generar orden de laboratorio</a>
+    <a th:href="@{/admin/medico/citas/{id}/receta(id=${id})}" class="btn btn-secondary">Generar receta médica</a>
+    <a th:href="@{/admin/medico/citas/{id}/ordenes(id=${id})}" class="btn btn-secondary">Resultados de laboratorio</a>
     <a th:href="@{/admin/medico/citas/{id}/seguimiento(id=${id})}" class="btn btn-secondary">Agendar Seguimiento</a>
 </div>
 </body>

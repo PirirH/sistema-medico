@@ -112,3 +112,34 @@ body {
 .vital-alert { background: #fef2f2; color: #991b1b; border-left: 4px solid #dc2626; padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.9rem; margin: 0.3rem 0; }
 .form textarea, .form select { padding: 0.55rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; font-family: inherit;}
 
+/* laboratorio, farmacia, inventario (agregar al final de static/css/styles.css) ===== */
+.data-table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: #fff; }
+.data-table th, .data-table td { padding: .5rem .6rem; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: top; font-size: .9rem; }
+.data-table th { background: #f3f4f6; font-weight: 600; }
+.filter-bar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: 1rem 0; }
+.filter-bar input, .filter-bar select { padding: .45rem .6rem; border: 1px solid #d1d5db; border-radius: 6px; }
+.checkbox-row { display: flex; align-items: center; gap: .5rem; margin: .35rem 0; font-weight: normal; }
+.checkbox-row input { width: auto; }
+.rx-row { display: grid; grid-template-columns: 2fr 1fr 1.2fr 1fr .7fr 1.6fr auto; gap: .4rem; margin-bottom: .5rem; }
+.rx-row input, .rx-row select { padding: .4rem; border: 1px solid #d1d5db; border-radius: 6px; min-width: 0; }
+@media (max-width: 900px) { .rx-row { grid-template-columns: 1fr 1fr; } }
+.hidden { display: none; }
+@media print { .no-print, .navbar, header { display: none !important; } }
+
+/* administración y agenda  */
+.btn-danger { background: #dc2626; color: #fff; border: 0; }
+.btn-warning { background: #fff; color: #ea580c; border: 1px solid #ea580c; }
+.input-error { border-color: #dc2626 !important; background: #fef2f2; }
+.pager { display: flex; gap: .75rem; align-items: center; margin: 1rem 0; }
+dialog.modal { border: 0; border-radius: 10px; padding: 1.25rem 1.5rem; max-width: 460px; width: 92%; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+dialog.modal::backdrop { background: rgba(0,0,0,.4); }
+dialog.modal label { display: block; margin-top: .6rem; }
+dialog.modal input, dialog.modal select, dialog.modal textarea { width: 100%; box-sizing: border-box; padding: .45rem; }
+.agenda-layout { display: flex; gap: 1rem; align-items: flex-start; }
+.agenda-calendar { flex: 1; min-width: 0; }
+.agenda-tasks { width: 320px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; }
+.task-list { list-style: none; padding: 0; margin: .5rem 0; }
+.task-item { display: flex; gap: .4rem; align-items: center; padding: .4rem 0; border-bottom: 1px solid #f3f4f6; }
+.task-item span { flex: 1; font-size: .9rem; }
+.task-done span { text-decoration: line-through; color: #9ca3af; }
+@media (max-width: 800px) { .agenda-layout { flex-direction: column; } .agenda-tasks { width: 100%; } }

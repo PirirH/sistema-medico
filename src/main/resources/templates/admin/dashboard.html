@@ -9,14 +9,18 @@
     <p>Bienvenido(a), <span th:text="${fullName}">Usuario</span>.</p>
 
     <div class="dashboard-actions">
-        <a sec:authorize="hasAnyRole('RECEPCIONISTA','ADMINISTRADOR')"
-           th:href="@{/admin/recepcion/buscar}" class="btn btn-primary">Recepción</a>
-        <a sec:authorize="hasAnyRole('CAJERO','ADMINISTRADOR')"
-           th:href="@{/admin/caja/buscar}" class="btn btn-primary">Cobro en Caja</a>
-        <a sec:authorize="hasRole('ENFERMERO')"
-           th:href="@{/admin/enfermeria/panel}" class="btn btn-primary">Signos Vitales</a>
-        <a sec:authorize="hasRole('MEDICO')"
-           th:href="@{/admin/medico/panel}" class="btn btn-primary">Mis Consultas</a>
+        <a sec:authorize="hasAnyRole('RECEPCIONISTA','ADMINISTRADOR')" th:href="@{/admin/recepcion/buscar}" class="btn btn-primary">Recepción</a>
+        <a sec:authorize="hasAnyRole('CAJERO','ADMINISTRADOR')" th:href="@{/admin/caja/buscar}" class="btn btn-primary">Cobro en Caja</a>
+        <a sec:authorize="hasAnyRole('CAJERO','ADMINISTRADOR')" th:href="@{/admin/caja/laboratorio/buscar}" class="btn btn-primary">Cobro de Laboratorio</a>
+        <a sec:authorize="hasRole('ENFERMERO')" th:href="@{/admin/enfermeria/panel}" class="btn btn-primary">Signos Vitales</a>
+        <a sec:authorize="hasRole('MEDICO')" th:href="@{/admin/medico/panel}" class="btn btn-primary">Mis Consultas</a>
+        <a sec:authorize="hasRole('MEDICO')" th:href="@{/admin/agenda}" class="btn btn-primary">Agenda Médica</a>
+        <a sec:authorize="hasAnyRole('LABORATORISTA','ADMINISTRADOR')" th:href="@{/admin/laboratorio/ordenes}" class="btn btn-primary">Laboratorio</a>
+        <a sec:authorize="hasAnyRole('FARMACEUTICO','ADMINISTRADOR')" th:href="@{/admin/farmacia/despachos/nuevo}" class="btn btn-primary">Despacho de Medicamentos</a>
+        <a sec:authorize="hasAnyRole('FARMACEUTICO','ADMINISTRADOR')" th:href="@{/admin/farmacia/inventario}" class="btn btn-primary">Inventario</a>
+        <a sec:authorize="hasRole('ADMINISTRADOR')" th:href="@{/admin/usuarios}" class="btn btn-primary">Usuarios</a>
+        <a sec:authorize="hasRole('ADMINISTRADOR')" th:href="@{/admin/sedes-especialidades}" class="btn btn-primary">Especialidades por Sede</a>
+        <a sec:authorize="hasRole('ADMINISTRADOR')" th:href="@{/admin/catalogos}" class="btn btn-primary">Catálogos</a>
     </div>
 </main>
 </body>

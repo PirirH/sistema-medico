@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Diálogo modal "Confirmar eliminación" (CU-01 FA05, CU-14 FA03). Uso: botón con class="js-delete"
+     y data-action (URL del POST) + data-message. -->
+<div th:fragment="modal">
+    <dialog id="deleteDialog" class="modal">
+        <form id="deleteForm" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <h2>⚠ Confirmar eliminación</h2>
+            <p id="deleteMessage"></p>
+            <div class="wizard-actions">
+                <button type="button" class="btn btn-secondary" id="deleteCancel">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+            </div>
+        </form>
+    </dialog>
+    <script>
+        (function () {
+            const dlg = document.getElementById('deleteDialog');
+            document.querySelectorAll('.js-delete').forEach(btn => btn.addEventListener('click', () => {
+                document.getElementById('deleteForm').action = btn.dataset.action;
+                document.getElementById('deleteMessage').textContent = btn.dataset.message;
+                dlg.showModal();
+            }));
+            document.getElementById('deleteCancel').addEventListener('click', () => dlg.close());
+        })();
+    </script>
+</div>
+</body>
+</html>

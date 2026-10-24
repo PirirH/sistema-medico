@@ -20,10 +20,13 @@ public class InternalUser {
     private String username;
 
     @Column(nullable = false)
-    private String password; // se almacena con hash BCrypt, nunca en texto plano
+    private String password; // hash BCrypt, nunca texto plano
 
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
+
+    @Column(length = 150)
+    private String email;
 
     @Column(length = 9)
     private String nit;
@@ -33,6 +36,9 @@ public class InternalUser {
 
     @Column(length = 8)
     private String phone;
+
+    @Column(name = "insurance_number", length = 50)
+    private String insuranceNumber;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
@@ -48,6 +54,10 @@ public class InternalUser {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    /** Eliminación lógica (CU-01 FA05): el registro se conserva por la auditoría y el historial clínico. */
+    @Column(nullable = false)
+    private boolean deleted = false;
 
     @Column(name = "failed_login_attempts", nullable = false)
     private int failedLoginAttempts = 0;

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Detalle de Despacho')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Despacho de receta <span th:text="${preview.prescription.prescriptionNumber}"></span></h1>
+
+    <div class="summary-box">
+        <p><strong>Paciente:</strong> <span th:text="${preview.prescription.patient.fullName}"></span></p>
+        <p><strong>Médico:</strong> <span th:text="'Dr(a). ' + ${preview.prescription.doctor.fullName}"></span></p>
+        <p><strong>Sucursal de despacho:</strong> <span th:text="${preview.branchName}"></span></p>
+        <p><strong>Vigencia:</strong> emitida hace <span th:text="${preview.daysSinceIssued}"></span> día(s) (válida 7 días)</p>
+    </div>
+
+    <p th:if="${formError}" class="error-text" th:text="${formError}"></p>
+
+    <form th:action="@{/admin/farmacia/despachos/receta/{id}/confirmar(id=${preview.prescription.id})}"
+          method="post" class="form">
+        <table class="data-table">
+            <thead>
+            <tr><th>Medicamento</th><th>Indicación</th><th>Recetado</th><th>Stock</th><th>Precio</th><th>Despachar</th><th>Sustitución</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="l, st : ${preview.lines}">
+                <td>
+                    <strong th:text="${l.medicineName}"></strong>
+                    <span class="badge badge-NO_ASISTIO" th:if="${l.controlled}">Controlado</span>
+                    <input type="hidden" th:name="|lines[${st.index}].prescriptionItemId|" th:value="${l.prescriptionItemId}">
+                </td>
+                <td>
+                    <span th:text="${l.dose} + ' / ' + ${l.frequency} + ' / ' + ${l.duration}"></span>
+                    <br><span class="muted" th:if="${l.instructions != null}" th:text="${l.instructions}"></span>
+                </td>
+                <td th:text="${l.requestedQuantity} + ' ' + ${l.unit}"></td>
+                <td>
+                    <span th:text="${l.stock != null} ? ${l.stock} : '—'"></span>
+                    <br><span class="vital-alert" th:if="${l.stockMessage != null}" th:text="${l.stockMessage}"></span>
+                </td>
+                <td th:text="'Q' + ${#numbers.formatDecimal(l.unitPrice, 1, 2)}"></td>
+                <td>
+                    <input type="number" min="0" th:max="${l.requestedQuantity}" style="width:5rem"
+                           th:name="|lines[${st.index}].quantity|" th:value="${l.requestedQuantity}">
+                    <label class="checkbox-row" th:if="${l.controlled}">
+                        <input type="checkbox" th:name="|lines[${st.index}].controlledAuthorized|" value="true">
+                        Autorizo despacho de medicamento controlado
+                    </label>
+                </td>
+                <td>
+                    <label class="checkbox-row">
+                        <input type="checkbox" th:name="|lines[${st.index}].substituted|" value="true"> Sustituir
+                    </label>
+                    <input type="text" th:name="|lines[${st.index}].substituteName|" placeholder="Medicamento sustituto" maxlength="150">
+                    <input type="text" th:name="|lines[${st.index}].substitutionReason|" placeholder="Motivo" maxlength="300">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="muted">Ponga 0 en "Despachar" para no entregar un medicamento. Si no hay stock suficiente no se podrá confirmar.</p>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/farmacia/despachos/nuevo}" class="btn btn-secondary">Volver</a>
+            <button type="submit" class="btn btn-primary">Confirmar Despacho</button>
+        </div>
+    </form>
+
+    <form th:action="@{/admin/farmacia/despachos/receta/{id}/cancelar(id=${preview.prescription.id})}"
+          method="post" class="action-row"
+          onsubmit="return confirm('¿Registrar que el paciente no desea adquirir los medicamentos?');">
+        <button type="submit" class="btn btn-secondary">El paciente no desea adquirir</button>
+    </form>
+</main>
+</body>
+</html>

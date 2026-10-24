@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Cobro de Laboratorio')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Cobro de Laboratorio</h1>
+
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+
+    <form th:action="@{/admin/caja/laboratorio/buscar}" method="post" class="form">
+        <label for="orden">Número de orden</label>
+        <input type="text" id="orden" name="orden" th:value="${orden}" placeholder="OL-2026-000001">
+        <label for="dpi">DPI del paciente</label>
+        <input type="text" id="dpi" name="dpi" th:value="${dpi}" maxlength="13" pattern="[0-9]{13}" inputmode="numeric" placeholder="13 dígitos">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+
+    <p th:if="${searchError}" class="error-text" th:text="${searchError}"></p>
+
+    <div th:if="${results != null}">
+        <div class="summary-box" th:each="o : ${results}">
+            <p><strong>Orden:</strong> <span th:text="${o.orderNumber}"></span></p>
+            <p><strong>Paciente:</strong> <span th:text="${o.patient.fullName}"></span></p>
+            <p><strong>Exámenes:</strong>
+                <span th:each="i, st : ${o.items}" th:text="${i.exam.name} + (${st.last} ? '' : ', ')"></span></p>
+            <p><strong>Monto a cobrar:</strong> Q<span th:text="${#numbers.formatDecimal(o.totalAmount, 1, 2)}"></span></p>
+            <a th:href="@{/admin/caja/laboratorio/{id}/cobrar(id=${o.id})}" class="btn btn-primary">Cobrar</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

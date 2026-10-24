@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Resultados de Laboratorio')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Resultados de laboratorio</h1>
+
+    <div class="summary-box">
+        <p><strong>Paciente:</strong> <span th:text="${appointment.patient.fullName}"></span></p>
+        <p><strong>Cita:</strong> <span th:text="${appointment.appointmentNumber}"></span></p>
+    </div>
+
+    <p th:if="${#lists.isEmpty(orders)}" class="muted">Este paciente no tiene órdenes de laboratorio.</p>
+
+    <div class="summary-box" th:each="o : ${orders}">
+        <h2>
+            <span th:text="${o.orderNumber}">OL</span>
+            <span class="badge" th:text="${o.status.label}"></span>
+            <span class="badge badge-NO_ASISTIO" th:if="${o.external}">Externa</span>
+        </h2>
+        <p class="muted">
+            Generada el <span th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+            por Dr(a). <span th:text="${o.doctor.fullName}"></span>
+        </p>
+        <table class="data-table">
+            <thead>
+            <tr><th>Examen</th><th>Resultado</th><th>Referencia</th><th>Estado</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="i : ${o.items}">
+                <td th:text="${i.exam.name}">Examen</td>
+                <td>
+                    <span th:if="${i.published}">
+                        <strong th:text="${i.resultValue}"></strong>
+                        <span th:text="${i.resultUnit}"></span>
+                        <span class="vital-alert" th:if="${i.outOfRange}">Fuera de rango</span>
+                        <span class="muted" th:if="${i.resultNotes != null}" th:text="'— ' + ${i.resultNotes}"></span>
+                    </span>
+                    <span th:unless="${i.published}" class="muted">Sin publicar</span>
+                </td>
+                <td th:text="${i.exam.referenceRange}">-</td>
+                <td th:text="${i.published} ? 'Publicado' : 'Pendiente'"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="wizard-actions">
+        <a th:href="@{/admin/medico/panel}" class="btn btn-secondary">Volver al panel</a>
+    </div>
+</main>
+</body>
+</html>

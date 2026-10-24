@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Catálogo')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1 th:text="${meta.title}">Catálogo</h1>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+
+    <form th:action="@{/admin/catalogos/{k}(k=${meta.key})}" method="get" class="filter-bar">
+        <input type="text" name="q" th:value="${q}" placeholder="Buscar por nombre…" maxlength="50">
+        <button type="submit" class="btn btn-primary">🔍</button>
+        <a th:href="@{/admin/catalogos/{k}(k=${meta.key})}" class="btn btn-secondary">Limpiar</a>
+        <label>Por página
+            <select name="size" onchange="this.form.submit()">
+                <option value="10" th:selected="${size == 10}">10</option>
+                <option value="25" th:selected="${size == 25}">25</option>
+                <option value="50" th:selected="${size == 50}">50</option>
+            </select>
+        </label>
+        <a th:href="@{/admin/catalogos/{k}/nuevo(k=${meta.key})}" class="btn btn-primary">+ Crear</a>
+        <a th:href="@{/admin/catalogos}" class="btn btn-secondary">Catálogos</a>
+    </form>
+
+    <p th:if="${#lists.isEmpty(result.content)}" class="muted">No se encontraron resultados.</p>
+
+    <table class="data-table" th:unless="${#lists.isEmpty(result.content)}">
+        <thead><tr><th>ID</th><th>Nombre</th><th th:text="${meta.detailLabel}">Detalle</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>
+        <tr th:each="r : ${result.content}" th:classappend="${!r.active} ? 'muted'">
+            <td th:text="${r.id}"></td>
+            <td th:text="${r.name}"></td>
+            <td th:text="${r.detail}"></td>
+            <td th:text="${r.active} ? 'Activo' : 'Inactivo'"></td>
+            <td>
+                <a th:href="@{/admin/catalogos/{k}/{id}/editar(k=${meta.key},id=${r.id})}" class="btn btn-secondary">Editar</a>
+                <button type="button" class="btn btn-warning js-delete" th:if="${r.active}"
+                        th:attr="data-action=@{/admin/catalogos/{k}/{id}/eliminar(k=${meta.key},id=${r.id})},
+                                 data-message='¿Está seguro que desea eliminar el registro ' + ${r.name} + '? Esta acción no se puede deshacer.'">
+                    Eliminar
+                </button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="pager">
+        <span th:text="${result.total} + ' registros'"></span>
+        <a th:unless="${result.first}" class="btn btn-secondary"
+           th:href="@{/admin/catalogos/{k}(k=${meta.key},q=${q},size=${size},page=${result.page - 1})}">‹ Anterior</a>
+        <span th:text="'Página ' + ${result.page + 1} + ' de ' + ${result.totalPages}"></span>
+        <a th:unless="${result.last}" class="btn btn-secondary"
+           th:href="@{/admin/catalogos/{k}(k=${meta.key},q=${q},size=${size},page=${result.page + 1})}">Siguiente ›</a>
+    </div>
+</main>
+
+<div th:replace="~{admin/confirm :: modal}"></div>
+</body>
+</html>

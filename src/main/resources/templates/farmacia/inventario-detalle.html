@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Detalle de Movimiento')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Movimiento #<span th:text="${movement.id}"></span></h1>
+    <div class="summary-box">
+        <p><strong>Tipo:</strong> <span th:text="${movement.movementType.label}"></span></p>
+        <p><strong>Medicamento:</strong> <span th:text="${movement.medicine.name}"></span></p>
+        <p><strong>Sucursal:</strong> <span th:text="${movement.branch.name}"></span></p>
+        <p><strong>Cantidad:</strong> <span th:text="${movement.quantity}"></span></p>
+        <p><strong>Stock:</strong> <span th:text="${movement.previousStock} + ' → ' + ${movement.newStock}"></span></p>
+        <p th:if="${movement.unitCost != null}"><strong>Costo unitario:</strong>
+            Q<span th:text="${#numbers.formatDecimal(movement.unitCost, 1, 2)}"></span></p>
+        <p><strong>Referencia:</strong> <span th:text="${movement.referenceNumber}"></span></p>
+        <p th:if="${movement.notes != null}"><strong>Notas:</strong> <span th:text="${movement.notes}"></span></p>
+        <p><strong>Registrado por:</strong>
+            <span th:text="${movement.performedBy != null} ? ${movement.performedBy.fullName} : '-'"></span></p>
+        <p><strong>Fecha:</strong> <span th:text="${#temporals.format(movement.createdAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <p><strong>Estado:</strong> <span th:text="${movement.active} ? 'Activo' : 'Inactivo'"></span></p>
+    </div>
+    <div class="wizard-actions">
+        <a th:href="@{/admin/farmacia/inventario}" class="btn btn-secondary">Volver</a>
+        <form th:action="@{/admin/farmacia/inventario/{id}/estado(id=${movement.id})}" method="post">
+            <button type="submit" class="btn btn-primary" th:text="${movement.active} ? 'Desactivar' : 'Activar'"></button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

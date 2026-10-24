@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Receta Médica')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Generar receta médica</h1>
+
+    <div class="summary-box">
+        <p><strong>Paciente:</strong> <span th:text="${appointment.patient.fullName}"></span></p>
+        <p><strong>Cita:</strong> <span th:text="${appointment.appointmentNumber}"></span></p>
+    </div>
+
+    <p th:if="${formError}" class="error-text" th:text="${formError}"></p>
+    <p class="muted">Todos los campos son obligatorios excepto las indicaciones especiales.</p>
+
+    <form th:action="@{/admin/medico/citas/{id}/receta(id=${appointment.id})}"
+          th:object="${prescriptionForm}" method="post" class="form" id="prescriptionForm">
+
+        <div id="rows">
+            <div class="rx-row" th:each="row, st : *{items}">
+                <select th:name="|items[${st.index}].medicineId|">
+                    <option value="">-- Medicamento --</option>
+                    <option th:each="m : ${medicines}" th:value="${m.id}"
+                            th:text="${m.name} + ' (' + ${m.unit} + ')'"
+                            th:selected="${row.medicineId != null and row.medicineId == m.id}"></option>
+                </select>
+                <input type="text" th:name="|items[${st.index}].dose|" th:value="${row.dose}" placeholder="Dosis (ej. 500 mg)" maxlength="100">
+                <input type="text" th:name="|items[${st.index}].frequency|" th:value="${row.frequency}" placeholder="Frecuencia (ej. cada 8 horas)" maxlength="100">
+                <input type="text" th:name="|items[${st.index}].duration|" th:value="${row.duration}" placeholder="Duración (ej. 5 días)" maxlength="100">
+                <input type="number" th:name="|items[${st.index}].quantity|" th:value="${row.quantity}" min="1" placeholder="Cantidad" title="Unidades a despachar">
+                <input type="text" th:name="|items[${st.index}].instructions|" th:value="${row.instructions}" placeholder="Indicaciones especiales (opcional)" maxlength="500">
+                <button type="button" class="btn btn-secondary rx-remove">Quitar</button>
+            </div>
+        </div>
+
+        <button type="button" id="addRow" class="btn btn-secondary">+ Agregar medicamento</button>
+
+        <label for="notes">Notas de la receta (opcional)</label>
+        <textarea th:field="*{notes}" rows="2" maxlength="1000"></textarea>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/medico/citas/{id}/consulta(id=${appointment.id})}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar receta</button>
+        </div>
+    </form>
+
+    <!-- Plantilla para filas nuevas (la clona el script con un índice nuevo) -->
+    <template id="rowTemplate">
+        <div class="rx-row">
+            <select data-field="medicineId">
+                <option value="">-- Medicamento --</option>
+                <option th:each="m : ${medicines}" th:value="${m.id}" th:text="${m.name} + ' (' + ${m.unit} + ')'"></option>
+            </select>
+            <input type="text" data-field="dose" placeholder="Dosis (ej. 500 mg)" maxlength="100">
+            <input type="text" data-field="frequency" placeholder="Frecuencia (ej. cada 8 horas)" maxlength="100">
+            <input type="text" data-field="duration" placeholder="Duración (ej. 5 días)" maxlength="100">
+            <input type="number" data-field="quantity" value="1" min="1" placeholder="Cantidad" title="Unidades a despachar">
+            <input type="text" data-field="instructions" placeholder="Indicaciones especiales (opcional)" maxlength="500">
+            <button type="button" class="btn btn-secondary rx-remove">Quitar</button>
+        </div>
+    </template>
+</main>
+
+<script th:inline="javascript">
+    const rows = document.getElementById('rows');
+    const template = document.getElementById('rowTemplate');
+    let nextIndex = /*[[${#lists.size(prescriptionForm.items)}]]*/ 1;
+
+    document.getElementById('addRow').addEventListener('click', () => {
+        const node = template.content.firstElementChild.cloneNode(true);
+        node.querySelectorAll('[data-field]').forEach(el => {
+            el.name = 'items[' + nextIndex + '].' + el.dataset.field;
+        });
+        nextIndex++;
+        rows.appendChild(node);
+    });
+
+    // Quitar fila (siempre debe quedar al menos una visible).
+    rows.addEventListener('click', e => {
+        if (e.target.classList.contains('rx-remove') && rows.children.length > 1) {
+            e.target.closest('.rx-row').remove();
+        }
+    });
+</script>
+</body>
+</html>

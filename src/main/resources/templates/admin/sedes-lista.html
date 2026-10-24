@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Especialidades por Sede')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Especialidades por Sede</h1>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+
+    <form th:action="@{/admin/sedes-especialidades}" method="get" class="filter-bar">
+        <input type="number" name="id" th:value="${idFilter}" placeholder="Filtrar por ID" min="1">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <a th:href="@{/admin/sedes-especialidades}" class="btn btn-secondary">Limpiar</a>
+        <a th:href="@{/admin/sedes-especialidades/nuevo}" class="btn btn-primary">Asignar Especialidad</a>
+    </form>
+
+    <p th:if="${#lists.isEmpty(items)}" class="muted">No hay asignaciones registradas.</p>
+
+    <table class="data-table" th:unless="${#lists.isEmpty(items)}">
+        <thead><tr><th>ID</th><th>Sede</th><th>Especialidad</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>
+        <tr th:each="bs : ${items}">
+            <td th:text="${bs.id}"></td>
+            <td th:text="${bs.branch.name}"></td>
+            <td th:text="${bs.specialty.name}"></td>
+            <td th:text="'Q' + ${#numbers.formatDecimal(bs.price, 1, 2)}"></td>
+            <td th:text="${bs.active} ? 'Activo' : 'Inactivo'"></td>
+            <td>
+                <button type="button" class="btn btn-warning js-delete"
+                        th:attr="data-action=@{/admin/sedes-especialidades/{id}/eliminar(id=${bs.id})},
+                                 data-message='¿Confirmar eliminación de ' + ${bs.specialty.name} + ' en ' + ${bs.branch.name} + '?'">
+                    Eliminar
+                </button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+
+<div th:replace="~{admin/confirm :: modal}"></div>
+</body>
+</html>

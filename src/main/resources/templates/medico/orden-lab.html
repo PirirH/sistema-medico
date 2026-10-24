@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Orden de Laboratorio')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Generar orden de laboratorio</h1>
+
+    <div class="summary-box">
+        <p><strong>Paciente:</strong> <span th:text="${appointment.patient.fullName}"></span></p>
+        <p><strong>Cita:</strong> <span th:text="${appointment.appointmentNumber}"></span></p>
+    </div>
+
+    <p th:if="${formError}" class="error-text" th:text="${formError}"></p>
+
+    <form th:action="@{/admin/medico/citas/{id}/orden-lab(id=${appointment.id})}"
+          th:object="${labOrderForm}" method="post" class="form">
+
+        <label>Exámenes disponibles</label>
+        <p class="muted" th:if="${#lists.isEmpty(exams)}">No hay exámenes activos en el catálogo.</p>
+        <label class="checkbox-row" th:each="e : ${exams}">
+            <input type="checkbox" name="examIds" th:value="${e.id}"
+                   th:checked="${labOrderForm.examIds != null and labOrderForm.examIds.contains(e.id)}">
+            <span th:text="${e.name} + ' — Q' + ${#numbers.formatDecimal(e.defaultAmount, 1, 2)}">Examen</span>
+        </label>
+
+        <label for="notes">Observaciones</label>
+        <textarea th:field="*{notes}" rows="3" maxlength="1000"></textarea>
+
+        <label class="checkbox-row">
+            <input type="checkbox" th:field="*{external}">
+            Orden externa (el paciente realizará los exámenes en otro laboratorio)
+        </label>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/medico/citas/{id}/consulta(id=${appointment.id})}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar orden</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

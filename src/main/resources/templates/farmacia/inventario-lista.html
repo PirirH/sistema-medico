@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Bitácora de Inventario')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Bitácora de Inventario</h1>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+    <p th:if="${flashWarning}" class="notice" th:text="${flashWarning}"></p>
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+
+    <form th:action="@{/admin/farmacia/inventario}" method="get" class="filter-bar">
+        <select name="type">
+            <option value="">Todos los tipos</option>
+            <option th:each="t : ${types}" th:value="${t.name()}" th:text="${t.label}"
+                    th:selected="${filter.type == t}"></option>
+        </select>
+        <select name="medicineId">
+            <option value="">Todos los medicamentos</option>
+            <option th:each="m : ${medicines}" th:value="${m.id}" th:text="${m.name}"
+                    th:selected="${filter.medicineId != null and filter.medicineId == m.id}"></option>
+        </select>
+        <select name="branchId">
+            <option value="">Todas las sucursales</option>
+            <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"
+                    th:selected="${filter.branchId != null and filter.branchId == b.id}"></option>
+        </select>
+        <input type="text" name="reference" th:value="${filter.reference}" placeholder="Referencia">
+        <input type="text" name="user" th:value="${filter.user}" placeholder="Usuario">
+        <input type="date" name="dateFrom" th:value="${filter.dateFrom}">
+        <input type="date" name="dateTo" th:value="${filter.dateTo}">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <a th:href="@{/admin/farmacia/inventario}" class="btn btn-secondary">Limpiar</a>
+        <a th:href="@{/admin/farmacia/inventario/nuevo}" class="btn btn-primary">+ Registrar movimiento</a>
+    </form>
+
+    <p th:if="${#lists.isEmpty(movements)}" class="muted">No se encontraron movimientos.</p>
+    <table class="data-table" th:unless="${#lists.isEmpty(movements)}">
+        <thead>
+        <tr><th>Fecha</th><th>Tipo</th><th>Medicamento</th><th>Sucursal</th><th>Cant.</th><th>Stock</th><th>Referencia</th><th>Usuario</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="m : ${movements}" th:classappend="${!m.active} ? 'muted'">
+            <td th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${m.movementType.label}"></td>
+            <td th:text="${m.medicine.name}"></td>
+            <td th:text="${m.branch.name}"></td>
+            <td th:text="${(m.movementType.entry ? '+' : '-') + m.quantity}"></td>
+            <td th:text="${m.previousStock} + ' → ' + ${m.newStock}"></td>
+            <td th:text="${m.referenceNumber}"></td>
+            <td th:text="${m.performedBy != null} ? ${m.performedBy.fullName} : '-'"></td>
+            <td th:text="${m.active} ? 'Activo' : 'Inactivo'"></td>
+            <td><a th:href="@{/admin/farmacia/inventario/{id}(id=${m.id})}" class="btn btn-secondary">Ver</a></td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

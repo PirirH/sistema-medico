@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Órdenes de Laboratorio')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Órdenes de Laboratorio</h1>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+
+    <form th:action="@{/admin/laboratorio/ordenes}" method="get" class="filter-bar">
+        <select name="estado">
+            <option value="">Todos los estados</option>
+            <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.label}"
+                    th:selected="${estado != null and estado == s}"></option>
+        </select>
+        <input type="text" name="paciente" th:value="${paciente}" placeholder="Paciente (nombre o DPI)">
+        <input type="text" name="medico" th:value="${medico}" placeholder="Médico">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <a th:href="@{/admin/laboratorio/ordenes}" class="btn btn-secondary">Limpiar</a>
+    </form>
+
+    <p th:if="${#lists.isEmpty(orders)}" class="muted">No se encontraron órdenes con esos filtros.</p>
+
+    <table class="data-table" th:unless="${#lists.isEmpty(orders)}">
+        <thead>
+        <tr><th>Orden</th><th>Paciente</th><th>Médico</th><th>Fecha</th><th>Monto</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="o : ${orders}">
+            <td th:text="${o.orderNumber}">OL</td>
+            <td th:text="${o.patient.fullName}">Paciente</td>
+            <td th:text="'Dr(a). ' + ${o.doctor.fullName}">Médico</td>
+            <td th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}">fecha</td>
+            <td th:text="'Q' + ${#numbers.formatDecimal(o.totalAmount, 1, 2)}">Q0.00</td>
+            <td>
+                <span class="badge" th:text="${o.status.label}"></span>
+                <span class="badge badge-NO_ASISTIO" th:if="${o.external}">Externa</span>
+            </td>
+            <td><a th:href="@{/admin/laboratorio/ordenes/{id}(id=${o.id})}" class="btn btn-secondary">Ver</a></td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Asignar Especialidad')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Asignar Especialidad a Sede</h1>
+
+    <p th:if="${formError}" class="error-text" th:text="${formError}"></p>
+
+    <form th:action="@{/admin/sedes-especialidades/nuevo}" th:object="${form}" method="post" class="form">
+        <label for="branchId">Sede *</label>
+        <select th:field="*{branchId}">
+            <option value="">-- Seleccione --</option>
+            <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+        </select>
+
+        <label for="specialtyId">Especialidad *</label>
+        <select th:field="*{specialtyId}">
+            <option value="">-- Seleccione --</option>
+            <option th:each="s : ${specialties}" th:value="${s.id}" th:text="${s.name}"></option>
+        </select>
+
+        <label for="price">Precio de la consulta (Q) *</label>
+        <input type="number" step="0.01" min="0.01" th:field="*{price}">
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/sedes-especialidades}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Asignar</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

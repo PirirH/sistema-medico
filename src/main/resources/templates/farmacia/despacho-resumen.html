@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Resumen de Despacho')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <div class="no-print">
+        <h1>✅ Despacho completado</h1>
+        <p class="notice notice-success" th:text="${successMessage}"></p>
+        <p class="notice" th:each="a : ${alerts}" th:text="${a}"></p>
+        <p th:if="${substitutions > 0}" class="muted">Sustituciones registradas: <span th:text="${substitutions}"></span></p>
+    </div>
+
+    <div class="summary-box">
+        <h2>Comprobante de Despacho</h2>
+        <p><strong>Número:</strong> <span th:text="${dispensation.dispensationNumber}"></span></p>
+        <p><strong>Receta:</strong> <span th:text="${dispensation.prescription.prescriptionNumber}"></span></p>
+        <p><strong>Paciente:</strong> <span th:text="${dispensation.prescription.patient.fullName}"></span></p>
+        <p><strong>Sucursal:</strong> <span th:text="${dispensation.branch.name}"></span></p>
+        <p><strong>Farmacéutico:</strong> <span th:text="${dispensation.pharmacist.fullName}"></span></p>
+        <p><strong>Fecha:</strong> <span th:text="${#temporals.format(dispensation.createdAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <table class="data-table">
+            <thead><tr><th>Medicamento</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+            <tbody>
+            <tr th:each="i : ${dispensation.items}">
+                <td>
+                    <span th:text="${i.medicine.name}"></span>
+                    <span class="muted" th:if="${i.substituted}"
+                          th:text="'→ sustituido por ' + ${i.substituteName} + ' (' + ${i.substitutionReason} + ')'"></span>
+                </td>
+                <td th:text="${i.quantity}"></td>
+                <td th:text="'Q' + ${#numbers.formatDecimal(i.unitPrice, 1, 2)}"></td>
+                <td th:text="'Q' + ${#numbers.formatDecimal(i.subtotal, 1, 2)}"></td>
+            </tr>
+            </tbody>
+        </table>
+        <p><strong>Total:</strong> Q<span th:text="${#numbers.formatDecimal(dispensation.totalAmount, 1, 2)}"></span></p>
+    </div>
+
+    <div class="wizard-actions no-print">
+        <button type="button" class="btn btn-secondary" onclick="window.print()">Imprimir</button>
+        <a th:href="@{/admin/farmacia/despachos/nuevo}" class="btn btn-primary">Nuevo Despacho</a>
+    </div>
+</main>
+</body>
+</html>

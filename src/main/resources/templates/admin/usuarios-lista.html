@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Listado de Usuarios')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Listado de Usuarios</h1>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+    <p th:if="${searchError}" class="error-text" th:text="${searchError}"></p>
+
+    <form th:action="@{/admin/usuarios}" method="get" class="filter-bar">
+        <select name="campo">
+            <option value="id" th:selected="${campo == 'id'}">ID</option>
+            <option value="nombre" th:selected="${campo == 'nombre'}">Nombre</option>
+            <option value="correo" th:selected="${campo == 'correo'}">Correo Electrónico</option>
+            <option value="rol" th:selected="${campo == 'rol'}">Rol</option>
+            <option value="usuario" th:selected="${campo == 'usuario'}">Nombre de Usuario</option>
+            <option value="dpi" th:selected="${campo == 'dpi'}">DPI</option>
+        </select>
+        <input type="text" name="q" th:value="${q}" placeholder="Buscar…" maxlength="40">
+        <button type="submit" class="btn btn-primary">🔍</button>
+        <a th:href="@{/admin/usuarios}" class="btn btn-secondary">Limpiar</a>
+        <label>Elementos por página
+            <select name="size" onchange="this.form.submit()">
+                <option value="10" th:selected="${size == 10}">10</option>
+                <option value="25" th:selected="${size == 25}">25</option>
+                <option value="50" th:selected="${size == 50}">50</option>
+            </select>
+        </label>
+        <a th:href="@{/admin/usuarios/nuevo}" class="btn btn-primary">+ Crear Usuario</a>
+    </form>
+
+    <p th:if="${#lists.isEmpty(result.content)}" class="error-text">No se encontraron datos usuarios.</p>
+
+    <table class="data-table" th:unless="${#lists.isEmpty(result.content)}">
+        <thead>
+        <tr><th>ID</th><th>Nombre</th><th>Correo Electrónico</th><th>Rol</th><th>Usuario</th><th>Estado</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="u : ${result.content}">
+            <td th:text="${u.id}"></td>
+            <td th:text="${u.fullName}"></td>
+            <td th:text="${u.email}"></td>
+            <td th:text="${u.role.name}"></td>
+            <td th:text="${u.username}"></td>
+            <td><span class="badge" th:text="${u.active} ? 'Activo' : 'Inactivo'"></span></td>
+            <td>
+                <a th:href="@{/admin/usuarios/{id}/editar(id=${u.id})}" class="btn btn-secondary">Editar</a>
+                <button type="button" class="btn btn-warning js-delete"
+                        th:attr="data-action=@{/admin/usuarios/{id}/eliminar(id=${u.id})},
+                                 data-message='¿Está seguro que desea eliminar el usuario “' + ${u.username} + '”? Esta acción no se puede deshacer.'">
+                    Eliminar
+                </button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="pager">
+        <span th:text="'Mostrando ' + ${#lists.size(result.content)} + ' de ' + ${result.total} + ' registros'"></span>
+        <a th:unless="${result.first}" class="btn btn-secondary"
+           th:href="@{/admin/usuarios(campo=${campo},q=${q},size=${size},page=${result.page - 1})}">‹ Anterior</a>
+        <span th:text="'Página ' + ${result.page + 1} + ' de ' + ${result.totalPages}"></span>
+        <a th:unless="${result.last}" class="btn btn-secondary"
+           th:href="@{/admin/usuarios(campo=${campo},q=${q},size=${size},page=${result.page + 1})}">Siguiente ›</a>
+    </div>
+</main>
+
+<div th:replace="~{admin/confirm :: modal}"></div>
+</body>
+</html>

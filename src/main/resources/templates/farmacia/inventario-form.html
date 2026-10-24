@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Registrar Movimiento')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Registrar movimiento de inventario</h1>
+
+    <p th:if="${formError}" class="error-text" th:text="${formError}"></p>
+
+    <form th:action="@{/admin/farmacia/inventario/nuevo}" th:object="${movementForm}" method="post" class="form">
+        <label for="movementType">Tipo de movimiento</label>
+        <select th:field="*{movementType}" id="movementType">
+            <option value="">-- Seleccione --</option>
+            <option th:each="t : ${types}" th:value="${t.name()}" th:text="${t.label}"
+                    th:attr="data-entry=${t.entry},data-notes=${t.notesRequired},data-ref=${t.referenceLabel}"></option>
+        </select>
+
+        <label for="medicineId">Medicamento</label>
+        <select th:field="*{medicineId}" id="medicineId">
+            <option value="">-- Seleccione --</option>
+            <option th:each="m : ${medicines}" th:value="${m.id}" th:text="${m.name}"></option>
+        </select>
+
+        <label for="branchId">Sucursal</label>
+        <select th:field="*{branchId}" id="branchId">
+            <option value="">-- Seleccione --</option>
+            <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+        </select>
+
+        <p id="stockPanel" class="notice hidden"></p>
+
+        <label for="quantity">Cantidad</label>
+        <input type="number" min="1" th:field="*{quantity}">
+
+        <label for="unitCost">Costo unitario (Q)</label>
+        <input type="number" step="0.01" min="0" th:field="*{unitCost}">
+
+        <label for="referenceNumber" id="refLabel">Número de referencia</label>
+        <input type="text" th:field="*{referenceNumber}" maxlength="100">
+
+        <label for="notes" id="notesLabel">Notas</label>
+        <textarea th:field="*{notes}" rows="3" maxlength="500"></textarea>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/farmacia/inventario}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Registrar</button>
+        </div>
+    </form>
+</main>
+
+<script>
+    const med = document.getElementById('medicineId');
+    const br = document.getElementById('branchId');
+    const typeSel = document.getElementById('movementType');
+    const panel = document.getElementById('stockPanel');
+
+    async function refreshPanel() {
+        if (!med.value || !br.value) { panel.classList.add('hidden'); return; }
+        try {
+            const r = await fetch('/admin/farmacia/inventario/api/panel?medicineId=' + med.value + '&branchId=' + br.value);
+            const d = await r.json();
+            panel.textContent = d.exists
+                ? 'Stock actual: ' + d.currentStock + (d.minimumStock != null ? ' (mínimo: ' + d.minimumStock + ')' : '')
+                : 'Sin inventario registrado para esta sucursal (se creará con el primer ingreso).';
+            panel.classList.remove('hidden');
+        } catch (e) { panel.classList.add('hidden'); }
+    }
+    function refreshType() {
+        const o = typeSel.selectedOptions[0];
+        const label = o && o.dataset.ref ? o.dataset.ref : 'Número de referencia';
+        document.getElementById('refLabel').textContent = label;
+        document.getElementById('notesLabel').textContent =
+            (o && o.dataset.notes === 'true') ? 'Notas (obligatorias para este tipo)' : 'Notas';
+    }
+    med.addEventListener('change', refreshPanel);
+    br.addEventListener('change', refreshPanel);
+    typeSel.addEventListener('change', refreshType);
+    refreshPanel(); refreshType();
+</script>
+</body>
+</html>

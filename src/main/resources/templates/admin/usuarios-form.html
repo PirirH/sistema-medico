@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Usuario')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1 th:text="${editingId == null} ? 'Crear Usuario' : 'Editar Usuario'">Usuario</h1>
+
+    <form th:action="${editingId == null} ? @{/admin/usuarios/nuevo} : @{/admin/usuarios/{id}/editar(id=${editingId})}"
+          th:object="${userForm}" method="post" class="form">
+
+        <label for="fullName">Nombre Completo *</label>
+        <input type="text" th:field="*{fullName}" maxlength="120" th:classappend="${errors['fullName'] != null} ? 'input-error'">
+        <p class="error-text" th:if="${errors['fullName'] != null}" th:text="${errors['fullName']}"></p>
+
+        <label for="email">Correo Electrónico *</label>
+        <input type="email" th:field="*{email}" maxlength="150" th:classappend="${errors['email'] != null} ? 'input-error'">
+        <p class="error-text" th:if="${errors['email'] != null}" th:text="${errors['email']}"></p>
+
+        <label for="username">Nombre de Usuario * (8-9 caracteres alfanuméricos)</label>
+        <input type="text" th:field="*{username}" maxlength="12" th:classappend="${errors['username'] != null} ? 'input-error'">
+        <p class="error-text" th:if="${errors['username'] != null}" th:text="${errors['username']}"></p>
+
+        <label for="password" th:text="${editingId == null} ? 'Contraseña * (mínimo 12 caracteres)' : 'Nueva Contraseña (opcional)'">Contraseña</label>
+        <input type="password" th:field="*{password}" autocomplete="new-password" th:classappend="${errors['password'] != null} ? 'input-error'">
+        <p class="error-text" th:if="${errors['password'] != null}" th:text="${errors['password']}"></p>
+
+        <label for="dpi">Documento de Identificación (opcional)</label>
+        <input type="text" th:field="*{dpi}" maxlength="13" inputmode="numeric" th:classappend="${errors['dpi'] != null} ? 'input-error'">
+        <p class="error-text" th:if="${errors['dpi'] != null}" th:text="${errors['dpi']}"></p>
+
+        <label for="phone">Número de Teléfono (opcional)</label>
+        <input type="text" th:field="*{phone}" maxlength="8" inputmode="numeric" th:classappend="${errors['phone'] != null} ? 'input-error'">
+        <p class="error-text" th:if="${errors['phone'] != null}" th:text="${errors['phone']}"></p>
+
+        <label for="roleId">Rol *</label>
+        <select th:field="*{roleId}" th:classappend="${errors['roleId'] != null} ? 'input-error'">
+            <option value="">-- Seleccione --</option>
+            <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.name}" th:attr="data-name=${r.name}"></option>
+        </select>
+        <p class="error-text" th:if="${errors['roleId'] != null}" th:text="${errors['roleId']}"></p>
+
+        <label for="nit">NIT (opcional)</label>
+        <input type="text" th:field="*{nit}" maxlength="9" th:classappend="${errors['nit'] != null} ? 'input-error'">
+        <p class="error-text" th:if="${errors['nit'] != null}" th:text="${errors['nit']}"></p>
+
+        <label for="insuranceNumber">Número de Seguro (opcional)</label>
+        <input type="text" th:field="*{insuranceNumber}" maxlength="50" th:classappend="${errors['insuranceNumber'] != null} ? 'input-error'">
+        <p class="error-text" th:if="${errors['insuranceNumber'] != null}" th:text="${errors['insuranceNumber']}"></p>
+
+        <label for="branchId" th:text="${editingId == null} ? 'Sucursal *' : 'Sucursal (opcional)'">Sucursal</label>
+        <select th:field="*{branchId}" th:classappend="${errors['branchId'] != null} ? 'input-error'">
+            <option value="">-- Seleccione --</option>
+            <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+        </select>
+        <p class="error-text" th:if="${errors['branchId'] != null}" th:text="${errors['branchId']}"></p>
+
+        <div id="specialtyBox">
+            <label for="specialtyId">Especialidad (solo médicos)</label>
+            <select th:field="*{specialtyId}" th:classappend="${errors['specialtyId'] != null} ? 'input-error'">
+                <option value="">-- Seleccione --</option>
+                <option th:each="s : ${specialties}" th:value="${s.id}" th:text="${s.name}"></option>
+            </select>
+            <p class="error-text" th:if="${errors['specialtyId'] != null}" th:text="${errors['specialtyId']}"></p>
+        </div>
+
+        <label for="active">Estado *</label>
+        <select id="active" name="active">
+            <option value="true" th:selected="${userForm.active}">Activo</option>
+            <option value="false" th:selected="${!userForm.active}">Inactivo</option>
+        </select>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/usuarios}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary" th:text="${editingId == null} ? 'Crear' : 'Actualizar'">Guardar</button>
+        </div>
+    </form>
+</main>
+
+<script>
+    // La especialidad solo aplica al rol Médico (RN-CU01-14).
+    const roleSel = document.getElementById('roleId');
+    const box = document.getElementById('specialtyBox');
+    function toggleSpecialty() {
+        const o = roleSel.selectedOptions[0];
+        const isDoctor = o && o.dataset.name && o.dataset.name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase() === 'medico';
+        box.classList.toggle('hidden', !isDoctor);
+    }
+    roleSel.addEventListener('change', toggleSpecialty);
+    toggleSpecialty();
+</script>
+</body>
+</html>

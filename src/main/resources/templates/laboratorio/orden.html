@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Detalle de Orden')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Orden <span th:text="${order.orderNumber}">OL</span></h1>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+    <p th:if="${flashWarning}" class="notice" th:text="${flashWarning}"></p>
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+
+    <div class="summary-box">
+        <p><strong>Paciente:</strong> <span th:text="${order.patient.fullName}"></span>
+           (DPI <span th:text="${order.patient.dpi}"></span>)</p>
+        <p><strong>Médico:</strong> <span th:text="'Dr(a). ' + ${order.doctor.fullName}"></span></p>
+        <p><strong>Estado:</strong> <span class="badge" th:text="${order.status.label}"></span>
+            <span class="badge badge-NO_ASISTIO" th:if="${order.external}">Externa</span></p>
+        <p><strong>Monto total:</strong> Q<span th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2)}"></span></p>
+        <p th:if="${order.notes != null}"><strong>Notas:</strong> <span th:text="${order.notes}"></span></p>
+    </div>
+
+    <!-- Paso 4-6 de CU-09: instrucciones según el estado -->
+    <div class="notice" th:if="${order.status.name() == 'PENDIENTE' and !order.external}">
+        Informe al paciente los exámenes ordenados y el monto total: debe pagar en caja antes de la toma de muestras.
+        <br>El pago debe estar completado antes de proceder con la toma de muestras.
+    </div>
+    <div class="notice" th:if="${order.external}">
+        Orden externa: el paciente realizará los exámenes en un laboratorio externo y presentará los resultados al médico.
+    </div>
+
+    <div class="summary-box" th:each="i : ${order.items}">
+        <h2>
+            <span th:text="${i.exam.name}">Examen</span>
+            <span class="muted" th:text="'Q' + ${#numbers.formatDecimal(i.amount, 1, 2)}"></span>
+            <span class="badge badge-ATENCION_FINALIZADA" th:if="${i.published}">Publicado</span>
+            <span class="vital-alert" th:if="${i.outOfRange and i.hasResult()}">
+                Fuera de rango<span th:if="${i.exam.referenceRange != null and !i.exam.referenceRange.isBlank()}"
+                                    th:text="' (' + ${i.exam.referenceRange} + ')'"></span>
+            </span>
+        </h2>
+        <p class="muted" th:if="${i.exam.referenceRange != null and !i.exam.referenceRange.isBlank()}"
+           th:text="'Rango de referencia: ' + ${i.exam.referenceRange} + ' ' + ${i.exam.unit}"></p>
+
+        <!-- Resultado ya publicado: solo lectura (inmutable) -->
+        <div th:if="${i.published}">
+            <p><strong>Resultado:</strong> <span th:text="${i.resultValue}"></span> <span th:text="${i.resultUnit}"></span></p>
+            <p class="muted" th:if="${i.resultNotes != null}" th:text="${i.resultNotes}"></p>
+        </div>
+
+        <!-- Formulario de resultado: solo si la orden está En proceso (pagada) -->
+        <div th:unless="${i.published}">
+            <form th:if="${order.status.name() == 'EN_PROCESO'}"
+                  th:action="@{/admin/laboratorio/ordenes/{oid}/items/{iid}/resultado(oid=${order.id},iid=${i.id})}"
+                  method="post" class="form">
+                <label>Valor del resultado</label>
+                <input type="text" name="resultValue" th:value="${i.resultValue}" maxlength="200" required>
+                <label>Unidad</label>
+                <input type="text" name="resultUnit" th:value="${i.resultUnit != null} ? ${i.resultUnit} : ${i.exam.unit}" maxlength="50">
+                <label>Fecha del resultado</label>
+                <input type="date" name="resultDate" th:value="${i.resultDate != null} ? ${i.resultDate} : ${today}" th:max="${today}">
+                <label class="checkbox-row">
+                    <input type="checkbox" name="outOfRange" value="true" th:checked="${i.outOfRange}">
+                    Fuera de rango
+                </label>
+                <label>Notas del resultado</label>
+                <textarea name="resultNotes" rows="2" maxlength="500" th:text="${i.resultNotes}"></textarea>
+                <button type="submit" class="btn btn-primary">Guardar Resultado</button>
+            </form>
+
+            <form th:if="${order.status.name() == 'EN_PROCESO' and i.hasResult()}"
+                  th:action="@{/admin/laboratorio/ordenes/{oid}/items/{iid}/publicar(oid=${order.id},iid=${i.id})}"
+                  method="post" class="action-row"
+                  onsubmit="return confirm('Una vez publicado, el resultado no podrá modificarse. ¿Publicar?');">
+                <button type="submit" class="btn btn-secondary">Publicar resultado</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="wizard-actions">
+        <a th:href="@{/admin/laboratorio/ordenes}" class="btn btn-secondary">Volver</a>
+    </div>
+</main>
+</body>
+</html>

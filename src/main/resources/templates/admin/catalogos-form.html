@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Catálogo')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1><span th:text="${editingId == null} ? 'Crear' : 'Editar'"></span> — <span th:text="${meta.title}"></span></h1>
+
+    <form th:action="${editingId == null} ? @{/admin/catalogos/{k}/nuevo(k=${meta.key})} : @{/admin/catalogos/{k}/{id}/editar(k=${meta.key},id=${editingId})}"
+          th:object="${form}" method="post" class="form">
+
+        <th:block th:if="${meta.has('name')}">
+            <label for="name">Nombre *</label>
+            <input type="text" th:field="*{name}" maxlength="200" th:classappend="${errors['name'] != null} ? 'input-error'">
+            <p class="error-text" th:if="${errors['name'] != null}" th:text="${errors['name']}"></p>
+        </th:block>
+
+        <th:block th:if="${meta.has('medicineId')}">
+            <label for="medicineId">Medicamento *</label>
+            <select th:field="*{medicineId}" th:disabled="${editingId != null}">
+                <option value="">-- Seleccione --</option>
+                <option th:each="m : ${medicines}" th:value="${m.id}" th:text="${m.name}"></option>
+            </select>
+            <input type="hidden" name="medicineId" th:if="${editingId != null}" th:value="${form.medicineId}">
+            <p class="error-text" th:if="${errors['medicineId'] != null}" th:text="${errors['medicineId']}"></p>
+        </th:block>
+        <th:block th:if="${meta.has('branchId')}">
+            <label for="branchId">Sucursal *</label>
+            <select th:field="*{branchId}" th:disabled="${editingId != null}">
+                <option value="">-- Seleccione --</option>
+                <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+            </select>
+            <input type="hidden" name="branchId" th:if="${editingId != null}" th:value="${form.branchId}">
+            <p class="error-text" th:if="${errors['branchId'] != null}" th:text="${errors['branchId']}"></p>
+        </th:block>
+        <th:block th:if="${meta.has('currentStock')}">
+            <label for="currentStock">Stock actual *</label>
+            <input type="number" min="0" th:field="*{currentStock}">
+            <p class="error-text" th:if="${errors['currentStock'] != null}" th:text="${errors['currentStock']}"></p>
+            <p class="muted">Cualquier cambio de stock queda registrado en la bitácora de inventario como ajuste.</p>
+        </th:block>
+
+        <th:block th:if="${meta.has('description')}">
+            <label for="description">Descripción</label>
+            <textarea th:field="*{description}" rows="3" maxlength="500"></textarea>
+            <p class="error-text" th:if="${errors['description'] != null}" th:text="${errors['description']}"></p>
+        </th:block>
+
+        <th:block th:if="${meta.has('phone')}">
+            <label for="phone">Teléfono (8 dígitos)</label>
+            <input type="text" th:field="*{phone}" maxlength="8" inputmode="numeric">
+            <p class="error-text" th:if="${errors['phone'] != null}" th:text="${errors['phone']}"></p>
+        </th:block>
+        <th:block th:if="${meta.has('address')}">
+            <label for="address">Dirección</label>
+            <input type="text" th:field="*{address}" maxlength="200">
+        </th:block>
+        <th:block th:if="${meta.has('openingHours')}">
+            <label for="openingHours">Horario de atención</label>
+            <input type="text" th:field="*{openingHours}" maxlength="100">
+        </th:block>
+
+        <th:block th:if="${meta.has('laboratoryId')}">
+            <label for="laboratoryId">Laboratorio *</label>
+            <select th:field="*{laboratoryId}">
+                <option value="">-- Seleccione --</option>
+                <option th:each="l : ${laboratories}" th:value="${l.id}" th:text="${l.name}"></option>
+            </select>
+            <p class="error-text" th:if="${errors['laboratoryId'] != null}" th:text="${errors['laboratoryId']}"></p>
+        </th:block>
+
+        <th:block th:if="${meta.has('price')}">
+            <label for="price">Precio (Q) *</label>
+            <input type="number" step="0.01" min="0.01" th:field="*{price}">
+            <p class="error-text" th:if="${errors['price'] != null}" th:text="${errors['price']}"></p>
+        </th:block>
+        <th:block th:if="${meta.has('referenceRange')}">
+            <label for="referenceRange">Rango de referencia</label>
+            <input type="text" th:field="*{referenceRange}" maxlength="100">
+        </th:block>
+        <th:block th:if="${meta.has('unit')}">
+            <label for="unit">Unidad (tableta, ml, etc.)</label>
+            <input type="text" th:field="*{unit}" maxlength="50">
+            <p class="error-text" th:if="${errors['unit'] != null}" th:text="${errors['unit']}"></p>
+        </th:block>
+        <th:block th:if="${meta.has('controlled')}">
+            <label class="checkbox-row">
+                <input type="checkbox" name="controlled" value="true" th:checked="${form.controlled}">
+                Medicamento controlado (auditoría especial en el despacho)
+            </label>
+        </th:block>
+        <th:block th:if="${meta.has('minimumStock')}">
+            <label for="minimumStock">Stock mínimo (opcional)</label>
+            <input type="number" min="0" th:field="*{minimumStock}">
+            <p class="error-text" th:if="${errors['minimumStock'] != null}" th:text="${errors['minimumStock']}"></p>
+        </th:block>
+
+        <label for="active">Estado *</label>
+        <select id="active" name="active">
+            <option value="true" th:selected="${form.active}">Activo</option>
+            <option value="false" th:selected="${!form.active}">Inactivo</option>
+        </select>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/catalogos/{k}(k=${meta.key})}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary" th:text="${editingId == null} ? 'Crear' : 'Actualizar'">Guardar</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

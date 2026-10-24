@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Agenda Médica')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<meta name="_csrf" th:content="${_csrf.token}">
+<meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+<main class="container">
+    <h1>Agenda Médica</h1>
+    <p id="agendaMsg" class="notice hidden"></p>
+
+    <div class="agenda-layout">
+        <section class="agenda-calendar">
+            <div class="filter-bar">
+                <button type="button" class="btn btn-primary" id="newEventBtn">+ Nuevo Evento</button>
+                <button type="button" class="btn btn-secondary" id="toggleTasks">📝 Tareas</button>
+            </div>
+            <div id="calendar"></div>
+        </section>
+
+        <aside class="agenda-tasks hidden" id="taskPanel">
+            <h2>Tareas</h2>
+            <div class="filter-bar">
+                <button type="button" class="btn btn-secondary task-filter" data-filter="pending">Pendientes</button>
+                <button type="button" class="btn btn-secondary task-filter" data-filter="done">Completadas</button>
+                <button type="button" class="btn btn-secondary task-filter" data-filter="all">Todas</button>
+            </div>
+            <p id="taskCount" class="muted"></p>
+            <ul id="taskList" class="task-list"></ul>
+            <button type="button" class="btn btn-primary" id="newTaskBtn">+ Nueva Tarea</button>
+        </aside>
+    </div>
+
+    <!-- Formulario de evento -->
+    <dialog id="eventDialog" class="modal">
+        <form id="eventForm">
+            <h2 id="eventDialogTitle">Nuevo Evento</h2>
+            <p id="eventError" class="error-text"></p>
+            <label>Título *</label>
+            <input type="text" id="evTitle" maxlength="150">
+            <label>Descripción</label>
+            <textarea id="evDescription" rows="2" maxlength="500"></textarea>
+            <label>Tipo de evento *</label>
+            <select id="evType">
+                <option value="REUNION">Reunión</option>
+                <option value="DESCANSO">Descanso</option>
+                <option value="CAPACITACION">Capacitación</option>
+                <option value="PERSONAL">Personal</option>
+                <option value="OTRO">Otro</option>
+            </select>
+            <label class="checkbox-row"><input type="checkbox" id="evAllDay"> Todo el día</label>
+            <label>Fecha de inicio *</label>
+            <input type="datetime-local" id="evStart">
+            <label>Fecha de fin *</label>
+            <input type="datetime-local" id="evEnd">
+            <div class="wizard-actions">
+                <button type="button" class="btn btn-secondary" id="evCancel">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Detalle de evento o cita -->
+    <dialog id="detailDialog" class="modal">
+        <h2 id="dtTitle"></h2>
+        <div id="dtBody"></div>
+        <div class="wizard-actions">
+            <button type="button" class="btn btn-secondary" id="dtClose">Cerrar</button>
+            <button type="button" class="btn btn-secondary" id="dtEdit">Editar</button>
+            <button type="button" class="btn btn-danger" id="dtDelete">Eliminar</button>
+        </div>
+    </dialog>
+
+    <!-- Formulario de tarea -->
+    <dialog id="taskDialog" class="modal">
+        <form id="taskForm">
+            <h2>Nueva Tarea</h2>
+            <p id="taskError" class="error-text"></p>
+            <label>Título *</label>
+            <input type="text" id="tkTitle" maxlength="150">
+            <label>Descripción</label>
+            <textarea id="tkDescription" rows="2" maxlength="1000"></textarea>
+            <label>Prioridad *</label>
+            <select id="tkPriority">
+                <option value="BAJA">Baja</option>
+                <option value="NORMAL" selected>Normal</option>
+                <option value="ALTA">Alta</option>
+            </select>
+            <label>Fecha límite *</label>
+            <input type="date" id="tkDue">
+            <div class="wizard-actions">
+                <button type="button" class="btn btn-secondary" id="tkCancel">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </dialog>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
+<script th:inline="javascript">
+    const BASE = /*[[@{/admin/agenda/api}]]*/ '/admin/agenda/api';
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    const $ = id => document.getElementById(id);
+
+    async function api(method, url, body) {
+        const res = await fetch(BASE + url, {
+            method,
+            headers: Object.assign({'Content-Type': 'application/json'}, {[csrfHeader]: csrfToken}),
+            body: body ? JSON.stringify(body) : undefined
+        });
+        const data = res.headers.get('content-type')?.includes('json') ? await res.json() : null;
+        if (!res.ok) throw new Error((data && data.message) || 'No se pudo completar la operación.');
+        return data;
+    }
+    function flash(msg) {
+        const el = $('agendaMsg');
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        setTimeout(() => el.classList.add('hidden'), 6000);
+    }
+
+    // ---------------- calendario
+    let selected = null;      // evento seleccionado en el popover
+    let editingId = null;     // id del evento que se edita (null = nuevo)
+
+    const calendar = new FullCalendar.Calendar($('calendar'), {
+        locale: 'es',
+        initialView: 'dayGridMonth',
+        headerToolbar: {left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay'},
+        height: 'auto',
+        events: (info, ok, fail) => {
+            fetch(BASE + '/calendario?start=' + encodeURIComponent(info.startStr) + '&end=' + encodeURIComponent(info.endStr))
+                .then(r => r.json()).then(ok).catch(fail);
+        },
+        eventClick: info => showDetail(info.event)
+    });
+    calendar.render();
+
+    function showDetail(ev) {
+        selected = ev;
+        const p = ev.extendedProps;
+        $('dtTitle').textContent = ev.title;
+        if (p.kind === 'appointment') {
+            $('dtBody').innerHTML = '';
+            addLine('Cita', p.number); addLine('Paciente', p.patient); addLine('Especialidad', p.specialty);
+            addLine('Estado', p.status); addLine('Fecha', ev.start.toLocaleString('es-GT'));
+            $('dtEdit').classList.add('hidden'); $('dtDelete').classList.add('hidden');
+        } else {
+            $('dtBody').innerHTML = '';
+            addLine('Tipo', p.eventType); addLine('Descripción', p.description || '—');
+            addLine('Inicio', p.startAt.replace('T', ' ')); addLine('Fin', p.endAt.replace('T', ' '));
+            $('dtEdit').classList.remove('hidden'); $('dtDelete').classList.remove('hidden');
+        }
+        $('detailDialog').showModal();
+    }
+    function addLine(k, v) {
+        const d = document.createElement('p');
+        const b = document.createElement('strong');
+        b.textContent = k + ': ';
+        d.appendChild(b); d.appendChild(document.createTextNode(v));
+        $('dtBody').appendChild(d);
+    }
+    $('dtClose').onclick = () => $('detailDialog').close();
+    $('dtDelete').onclick = async () => {
+        if (!confirm('¿Está seguro de eliminar este evento?')) return;
+        try {
+            await api('DELETE', '/eventos/' + selected.extendedProps.eventId);
+            $('detailDialog').close(); calendar.refetchEvents(); flash('Evento eliminado.');
+        } catch (e) { flash(e.message); }
+    };
+    $('dtEdit').onclick = () => {
+        const p = selected.extendedProps;
+        $('detailDialog').close();
+        openEventForm(p.eventId, selected.title, p.description, p.eventType, p.startAt, p.endAt, selected.allDay);
+    };
+
+    // ---------------- formulario de evento
+    function openEventForm(id, title, desc, type, start, end, allDay) {
+        editingId = id;
+        $('eventDialogTitle').textContent = id ? 'Editar Evento' : 'Nuevo Evento';
+        $('eventError').textContent = '';
+        $('evTitle').value = title || '';
+        $('evDescription').value = desc || '';
+        $('evType').value = type || 'REUNION';
+        $('evAllDay').checked = !!allDay;
+        applyAllDay();
+        $('evStart').value = (start || '').substring(0, $('evAllDay').checked ? 10 : 16);
+        $('evEnd').value = (end || '').substring(0, $('evAllDay').checked ? 10 : 16);
+        $('eventDialog').showModal();
+    }
+    function applyAllDay() {
+        const t = $('evAllDay').checked ? 'date' : 'datetime-local';
+        $('evStart').type = t; $('evEnd').type = t;
+    }
+    $('evAllDay').addEventListener('change', () => {
+        const s = $('evStart').value.substring(0, 10), e = $('evEnd').value.substring(0, 10);
+        applyAllDay();
+        $('evStart').value = $('evAllDay').checked ? s : (s ? s + 'T08:00' : '');
+        $('evEnd').value = $('evAllDay').checked ? e : (e ? e + 'T09:00' : '');
+    });
+    $('newEventBtn').onclick = () => openEventForm(null);
+    $('evCancel').onclick = () => $('eventDialog').close();
+    $('eventForm').addEventListener('submit', async ev => {
+        ev.preventDefault();
+        const allDay = $('evAllDay').checked;
+        const norm = v => v ? (allDay ? v + 'T00:00' : v) : null;
+        const body = {
+            title: $('evTitle').value, description: $('evDescription').value, eventType: $('evType').value,
+            allDay: allDay, startAt: norm($('evStart').value), endAt: norm($('evEnd').value)
+        };
+        try {
+            const r = editingId ? await api('PUT', '/eventos/' + editingId, body) : await api('POST', '/eventos', body);
+            $('eventDialog').close(); calendar.refetchEvents(); flash(r.message);
+        } catch (e) { $('eventError').textContent = e.message; }
+    });
+
+    // ---------------- tareas
+    let tasks = [], filter = 'pending';
+    $('toggleTasks').onclick = () => { $('taskPanel').classList.toggle('hidden'); loadTasks(); };
+    document.querySelectorAll('.task-filter').forEach(b => b.onclick = () => { filter = b.dataset.filter; renderTasks(); });
+
+    async function loadTasks() {
+        try { tasks = await (await fetch(BASE + '/tareas')).json(); renderTasks(); } catch (e) { flash('No se pudieron cargar las tareas.'); }
+    }
+    function renderTasks() {
+        const list = $('taskList'); list.innerHTML = '';
+        const shown = tasks.filter(t => filter === 'all' || (filter === 'done') === t.completed);
+        $('taskCount').textContent = shown.length + ' tarea(s)';
+        const icons = {ALTA: '🔴', NORMAL: '🟡', BAJA: '🟢'};
+        shown.forEach(t => {
+            const li = document.createElement('li');
+            li.className = 'task-item' + (t.completed ? ' task-done' : '');
+            const chk = document.createElement('input');
+            chk.type = 'checkbox'; chk.checked = t.completed;
+            chk.onchange = async () => { try { await api('POST', '/tareas/' + t.id + '/completar'); loadTasks(); } catch (e) { flash(e.message); } };
+            const txt = document.createElement('span');
+            txt.textContent = ' ' + (icons[t.priority] || '') + ' ' + t.title + ' — ' + t.dueDate + (t.description ? ' (' + t.description + ')' : '');
+            const del = document.createElement('button');
+            del.type = 'button'; del.className = 'btn btn-secondary'; del.textContent = '🗑';
+            del.onclick = async () => {
+                if (!confirm('¿Eliminar esta tarea?')) return;
+                try { await api('DELETE', '/tareas/' + t.id); loadTasks(); } catch (e) { flash(e.message); }
+            };
+            li.append(chk, txt, del);
+            list.appendChild(li);
+        });
+    }
+    $('newTaskBtn').onclick = () => {
+        $('taskError').textContent = ''; $('taskForm').reset();
+        $('tkDue').value = new Date().toISOString().substring(0, 10);
+        $('taskDialog').showModal();
+    };
+    $('tkCancel').onclick = () => $('taskDialog').close();
+    $('taskForm').addEventListener('submit', async ev => {
+        ev.preventDefault();
+        try {
+            await api('POST', '/tareas', {
+                title: $('tkTitle').value, description: $('tkDescription').value,
+                priority: $('tkPriority').value, dueDate: $('tkDue').value || null
+            });
+            $('taskDialog').close(); loadTasks();
+        } catch (e) { $('taskError').textContent = e.message; }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Comprobante de Laboratorio')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <div class="no-print">
+        <h1>✅ ¡Pago registrado exitosamente!</h1>
+        <p>La orden <strong th:text="${order.orderNumber}"></strong> pasó a estado En Proceso.</p>
+        <p th:if="${payment.changeGiven != null}">
+            Monto recibido: Q<span th:text="${#numbers.formatDecimal(payment.amountReceived, 1, 2)}"></span>.
+            Cambio a devolver: Q<span th:text="${#numbers.formatDecimal(payment.changeGiven, 1, 2)}"></span>.
+        </p>
+    </div>
+
+    <div class="summary-box">
+        <h2>Comprobante de Pago — Laboratorio</h2>
+        <p><strong>Número de transacción:</strong> <span th:text="${payment.transactionNumber}"></span></p>
+        <p><strong>Paciente:</strong> <span th:text="${order.patient.fullName}"></span></p>
+        <p><strong>Fecha y hora:</strong> <span th:text="${#temporals.format(payment.paidAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <p><strong>Forma de pago:</strong> <span th:text="${payment.method.label}"></span>
+            <span th:if="${payment.cardLastFour != null}" th:text="'terminada en ' + ${payment.cardLastFour}"></span></p>
+        <p><strong>Monto pagado:</strong> Q<span th:text="${#numbers.formatDecimal(payment.amount, 1, 2)}"></span></p>
+        <h2>Exámenes</h2>
+        <ul>
+            <li th:each="i : ${order.items}">
+                <span th:text="${i.exam.name}"></span> — Q<span th:text="${#numbers.formatDecimal(i.amount, 1, 2)}"></span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="wizard-actions no-print">
+        <button type="button" class="btn btn-secondary" onclick="window.print()">Imprimir Comprobante</button>
+        <a th:href="@{/admin/caja/laboratorio/buscar}" class="btn btn-primary">Nuevo Cobro</a>
+    </div>
+</main>
+</body>
+</html>
