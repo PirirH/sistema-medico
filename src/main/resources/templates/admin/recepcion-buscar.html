@@ -101,12 +101,11 @@
                th:href="@{'/admin/recepcion/' + ${appointment.id} + '/reasignar'}"
                class="btn btn-secondary">Reasignar Médico</a>
 
-            <!-- FA08: el flujo de signos vitales pertenece a CU-07 (aún no construido) -->
-            <button type="button" class="btn btn-secondary" disabled
-                    title="Se habilita cuando se construya CU-07"
-                    th:if="${appointment.priority.name() == 'EMERGENCIA' and (appointment.status.name() == 'CONFIRMADA' or appointment.status.name() == 'PACIENTE_PRESENTE')}">
-                Signos Vitales (Urgente)
-            </button>
+            <!-- FA08: la emergencia aparece primero en el panel de enfermería (CU-07) -->
+            <span class="notice notice-error"
+                  th:if="${appointment.priority.name() == 'EMERGENCIA' and (appointment.status.name() == 'CONFIRMADA' or appointment.status.name() == 'PACIENTE_PRESENTE')}">
+                Emergencia: el paciente aparece con prioridad en el panel de Enfermería.
+            </span>
         </div>
     </div>
 </main>

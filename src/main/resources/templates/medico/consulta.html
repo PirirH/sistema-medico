@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Consulta Médica')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Consulta Médica</h1>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+    <p th:if="${formError}" class="notice notice-error" th:text="${formError}"></p>
+
+    <div class="summary-box">
+        <p><strong>Cita:</strong> <span th:text="${appointment.appointmentNumber}"></span>
+            <span class="badge badge-EMERGENCIA" th:if="${appointment.priority.name() == 'EMERGENCIA'}">Emergencia</span></p>
+        <p><strong>Paciente:</strong> <span th:text="${appointment.patient.fullName}"></span></p>
+        <p><strong>Especialidad:</strong> <span th:text="${appointment.branchSpecialty.specialty.name}"></span></p>
+        <p th:if="${appointment.followUpType != null}"><strong>Seguimiento:</strong>
+            <span th:text="${appointment.followUpType.label}"></span></p>
+    </div>
+
+    <!-- Signos vitales tomados por enfermería -->
+    <div class="summary-box" th:if="${vitalSigns != null}">
+        <h2>Signos vitales</h2>
+        <p>
+            PA <strong th:text="${vitalSigns.systolic} + '/' + ${vitalSigns.diastolic}"></strong> mmHg ·
+            Temp <strong th:text="${vitalSigns.temperature}"></strong> °C ·
+            FC <strong th:text="${vitalSigns.heartRate}"></strong> lpm ·
+            Peso <strong th:text="${vitalSigns.weight}"></strong> kg ·
+            Talla <strong th:text="${vitalSigns.height}"></strong> cm
+        </p>
+        <p class="vital-alert" th:if="${vitalSigns.alerts != null}" th:text="${vitalSigns.alerts}"></p>
+        <p class="muted">Registrados el
+            <span th:text="${#temporals.format(vitalSigns.recordedAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+    </div>
+    <p th:if="${vitalSigns == null}" class="notice">Esta cita no tiene signos vitales registrados.</p>
+
+    <p th:if="${readOnly}" class="notice notice-success">
+        La consulta fue finalizada y ya no puede modificarse.
+    </p>
+
+    <form th:action="@{/admin/medico/citas/{id}/consulta(id=${appointment.id})}"
+          th:object="${consultationForm}" method="post" class="form">
+
+        <label for="visitReason">Motivo de visita *</label>
+        <textarea th:field="*{visitReason}" rows="2" maxlength="2000" th:disabled="${readOnly}"></textarea>
+        <p class="error-text" th:if="${#fields.hasErrors('visitReason')}" th:errors="*{visitReason}"></p>
+
+        <label for="clinicalFindings">Hallazgos clínicos</label>
+        <textarea th:field="*{clinicalFindings}" rows="4" maxlength="5000" th:disabled="${readOnly}"></textarea>
+        <p class="error-text" th:if="${#fields.hasErrors('clinicalFindings')}" th:errors="*{clinicalFindings}"></p>
+
+        <label for="cie10Code">Código CIE-10 (escriba código o nombre)</label>
+        <input type="text" th:field="*{cie10Code}" list="cie10List" maxlength="10" autocomplete="off"
+               th:disabled="${readOnly}">
+        <datalist id="cie10List"></datalist>
+        <p id="cie10Description" class="muted"></p>
+        <p class="error-text" th:if="${#fields.hasErrors('cie10Code')}" th:errors="*{cie10Code}"></p>
+
+        <label for="diagnosis">Diagnóstico * (obligatorio para finalizar)</label>
+        <textarea th:field="*{diagnosis}" rows="4" maxlength="5000" th:disabled="${readOnly}"></textarea>
+        <p class="error-text" th:if="${#fields.hasErrors('diagnosis')}" th:errors="*{diagnosis}"></p>
+
+        <label for="treatmentPlan">Plan de tratamiento</label>
+        <textarea th:field="*{treatmentPlan}" rows="4" maxlength="5000" th:disabled="${readOnly}"></textarea>
+        <p class="error-text" th:if="${#fields.hasErrors('treatmentPlan')}" th:errors="*{treatmentPlan}"></p>
+
+        <label for="notes">Notas adicionales</label>
+        <textarea th:field="*{notes}" rows="2" maxlength="2000" th:disabled="${readOnly}"></textarea>
+        <p class="error-text" th:if="${#fields.hasErrors('notes')}" th:errors="*{notes}"></p>
+
+        <label for="status">Estado de consulta</label>
+        <select th:field="*{status}" th:disabled="${readOnly}">
+            <option value="EN_CURSO">En curso</option>
+            <option value="FINALIZADA">Finalizada</option>
+        </select>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/medico/panel}" class="btn btn-secondary">Volver al panel</a>
+            <button type="submit" class="btn btn-primary" th:unless="${readOnly}">Guardar Consulta</button>
+        </div>
+    </form>
+
+    <h2>Acciones de la consulta</h2>
+    <div th:replace="~{medico/acciones :: acciones(${appointment.id})}"></div>
+</main>
+
+<script th:inline="javascript">
+    const cie10Url = /*[[@{/admin/medico/api/cie10}]]*/ '';
+    const input = document.getElementById('cie10Code');
+    const list = document.getElementById('cie10List');
+    const descriptionLabel = document.getElementById('cie10Description');
+    const known = {};
+    let timer = null;
+
+    function showDescription() {
+        const code = input.value.trim().toUpperCase();
+        descriptionLabel.textContent = known[code] ? known[code] : '';
+    }
+
+    // Autocompletado: sugiere códigos mientras el médico escribe (RNF-004: respuesta < 500 ms).
+    input.addEventListener('input', () => {
+        showDescription();
+        clearTimeout(timer);
+        const q = input.value.trim();
+        if (q.length < 2) { return; }
+        timer = setTimeout(() => {
+            fetch(cie10Url + '?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(items => {
+                    list.innerHTML = '';
+                    items.forEach(i => {
+                        known[i.code.toUpperCase()] = i.description;
+                        const o = document.createElement('option');
+                        o.value = i.code;
+                        o.label = i.code + ' — ' + i.description;
+                        list.appendChild(o);
+                    });
+                    showDescription();
+                });
+        }, 200);
+    });
+    input.addEventListener('change', showDescription);
+
+    // Si ya hay un código guardado, muestra su descripción.
+    if (input.value) {
+        fetch(cie10Url + '?q=' + encodeURIComponent(input.value.trim()))
+            .then(r => r.json())
+            .then(items => { items.forEach(i => known[i.code.toUpperCase()] = i.description); showDescription(); });
+    }
+</script>
+</body>
+</html>

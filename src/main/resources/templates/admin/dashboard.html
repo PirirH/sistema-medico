@@ -13,6 +13,10 @@
            th:href="@{/admin/recepcion/buscar}" class="btn btn-primary">Recepción</a>
         <a sec:authorize="hasAnyRole('CAJERO','ADMINISTRADOR')"
            th:href="@{/admin/caja/buscar}" class="btn btn-primary">Cobro en Caja</a>
+        <a sec:authorize="hasRole('ENFERMERO')"
+           th:href="@{/admin/enfermeria/panel}" class="btn btn-primary">Signos Vitales</a>
+        <a sec:authorize="hasRole('MEDICO')"
+           th:href="@{/admin/medico/panel}" class="btn btn-primary">Mis Consultas</a>
     </div>
 </main>
 </body>

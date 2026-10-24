@@ -97,3 +97,18 @@ body {
     body { background: white; }
     .summary-box { border: 1px solid #999; }
 }
+
+.badge-SIGNOS_VITALES { background: #e0e7ff; color: #3730a3; }
+.badge-EN_ESPERA { background: #cffafe; color: #155e75; }
+.badge-CONSULTA_MEDICA { background: #ede9fe; color: #5b21b6; }
+.badge-ATENCION_FINALIZADA { background: #d1fae5; color: #065f46; }
+.badge-NO_ASISTIO { background: #ffedd5; color: #9a3412; }
+.muted { color: #6b7280; font-size: 0.9rem; }
+.queue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.queue-card { background: white; border-radius: 8px; padding: 1rem 1.2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #0f4c81; }
+.queue-card p { margin: 0.3rem 0; }
+.queue-card-emergency { border-left-color: #b91c1c; background: #fff7f7; }
+.queue-title { font-weight: 700; color: #0f4c81; }
+.vital-alert { background: #fef2f2; color: #991b1b; border-left: 4px solid #dc2626; padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.9rem; margin: 0.3rem 0; }
+.form textarea, .form select { padding: 0.55rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; font-family: inherit;}
+

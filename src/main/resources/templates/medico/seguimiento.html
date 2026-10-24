@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Cita de Seguimiento')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Agendar cita de seguimiento</h1>
+
+    <!-- Paso 3: banner con los datos precargados desde la consulta -->
+    <div class="notice notice-success">
+        <p><strong>Paciente:</strong> <span th:text="${parent.patient.fullName}"></span></p>
+        <p><strong>Médico:</strong> <span th:text="'Dr(a). ' + ${parent.doctor.fullName}"></span></p>
+        <p><strong>Especialidad:</strong> <span th:text="${parent.branchSpecialty.specialty.name}"></span></p>
+        <p><strong>Sucursal:</strong> <span th:text="${parent.branchSpecialty.branch.name}"></span></p>
+    </div>
+
+    <p th:if="${formError}" class="error-text" th:text="${formError}"></p>
+
+    <form th:action="@{/admin/medico/citas/{id}/seguimiento(id=${parent.id})}"
+          th:object="${followUpForm}" method="post" class="form" id="followUpForm"
+          th:attr="data-time=${followUpForm.appointmentTime}">
+
+        <label for="followUpType">Tipo de seguimiento</label>
+        <select th:field="*{followUpType}">
+            <option value="">-- Seleccione --</option>
+            <option th:each="t : ${followUpTypes}" th:value="${t.name()}" th:text="${t.label}"></option>
+        </select>
+        <p class="error-text" th:if="${#fields.hasErrors('followUpType')}" th:errors="*{followUpType}"></p>
+
+        <label for="appointmentDate">Fecha</label>
+        <input type="date" th:field="*{appointmentDate}" th:min="${today}">
+        <p class="error-text" th:if="${#fields.hasErrors('appointmentDate')}" th:errors="*{appointmentDate}"></p>
+
+        <label for="appointmentTime">Horario disponible</label>
+        <select th:field="*{appointmentTime}">
+            <option value="">-- Seleccione una fecha primero --</option>
+        </select>
+        <p id="slotsEmptyMsg" class="error-text hidden">No hay horarios disponibles ese día. Intente con otra fecha.</p>
+        <p class="error-text" th:if="${#fields.hasErrors('appointmentTime')}" th:errors="*{appointmentTime}"></p>
+
+        <label for="reason">Observaciones del seguimiento</label>
+        <textarea th:field="*{reason}" rows="3" maxlength="2000"></textarea>
+        <p class="error-text" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
+
+        <label for="priority">Prioridad</label>
+        <select th:field="*{priority}">
+            <option th:each="p : ${priorities}" th:value="${p.name()}"
+                    th:text="${p.name() == 'EMERGENCIA'} ? 'Alta prioridad (Emergencia)' : 'Normal'"></option>
+        </select>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/medico/panel}" class="btn btn-secondary">Volver</a>
+            <button type="submit" class="btn btn-primary">Confirmar seguimiento</button>
+        </div>
+    </form>
+</main>
+
+<script th:inline="javascript">
+    const horariosUrl = /*[[@{/admin/medico/api/horarios}]]*/ '';
+    const form = document.getElementById('followUpForm');
+    const dateInput = document.getElementById('appointmentDate');
+    const timeSelect = document.getElementById('appointmentTime');
+    const emptyMsg = document.getElementById('slotsEmptyMsg');
+
+    function loadSlots(preselected) {
+        emptyMsg.classList.add('hidden');
+        if (!dateInput.value) { return; }
+        timeSelect.innerHTML = '<option value="">-- Cargando... --</option>';
+        fetch(horariosUrl + '?fecha=' + dateInput.value)
+            .then(r => r.json())
+            .then(slots => {
+                timeSelect.innerHTML = '<option value="">-- Seleccione un horario --</option>';
+                slots.forEach(s => {
+                    const hhmm = s.substring(0, 5);
+                    const o = document.createElement('option');
+                    o.value = hhmm;
+                    o.textContent = hhmm;
+                    timeSelect.appendChild(o);
+                });
+                if (slots.length === 0) { emptyMsg.classList.remove('hidden'); }
+                if (preselected) { timeSelect.value = preselected; }
+            });
+    }
+
+    dateInput.addEventListener('change', () => loadSlots());
+    if (dateInput.value) { loadSlots((form.dataset.time || '').substring(0, 5)); }
+</script>
+</body>
+</html>

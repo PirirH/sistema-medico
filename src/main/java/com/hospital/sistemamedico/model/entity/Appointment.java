@@ -3,6 +3,7 @@ package com.hospital.sistemamedico.model.entity;
 import com.hospital.sistemamedico.model.enums.AppointmentChannel;
 import com.hospital.sistemamedico.model.enums.AppointmentPriority;
 import com.hospital.sistemamedico.model.enums.AppointmentStatus;
+import com.hospital.sistemamedico.model.enums.FollowUpType;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -68,6 +69,19 @@ public class Appointment {
 
     @Column(name = "arrival_time")
     private LocalDateTime arrivalTime;
+
+    // ---- Fase 3 (CU-12): citas de seguimiento ----
+    @Enumerated(EnumType.STRING)
+    @Column(name = "follow_up_type", length = 30)
+    private FollowUpType followUpType;
+
+    /** Id de la consulta que originó el seguimiento (null si no es una cita de seguimiento). */
+    @Column(name = "parent_consultation_id")
+    private Integer parentConsultationId;
+
+    /** RN-CU11-05: true cuando ya se envió el recordatorio automático. */
+    @Column(name = "reminder_sent", nullable = false)
+    private boolean reminderSent = false;
 
     @Version
     private Long version;

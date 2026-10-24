@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Panel del Médico')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Panel del Médico</h1>
+    <p class="muted">La lista se actualiza automáticamente cada 30 segundos.</p>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+
+    <!-- En espera de consulta -->
+    <h2>En Espera de Consulta</h2>
+    <p th:if="${#lists.isEmpty(panel.waiting)}" class="muted">No hay pacientes en espera.</p>
+    <div class="queue-grid">
+        <div class="queue-card" th:each="a : ${panel.waiting}"
+             th:classappend="${a.priority.name() == 'EMERGENCIA'} ? 'queue-card-emergency'">
+            <p class="queue-title">
+                <span th:text="${a.appointmentNumber}">CIT</span>
+                <span class="badge badge-EMERGENCIA" th:if="${a.priority.name() == 'EMERGENCIA'}">Emergencia</span>
+            </p>
+            <p><strong th:text="${a.patient.fullName}">Paciente</strong></p>
+            <p class="muted" th:text="${a.branchSpecialty.specialty.name} + ' · ' + ${#temporals.format(a.scheduledAt, 'dd/MM/yyyy HH:mm')}">x</p>
+            <p><span class="badge" th:classappend="'badge-' + ${a.status.name()}" th:text="${a.status.label}"></span></p>
+            <div class="action-row">
+                <form th:action="@{/admin/medico/citas/{id}/iniciar(id=${a.id})}" method="post" class="inline-form">
+                    <button type="submit" class="btn btn-primary">Iniciar Consulta</button>
+                </form>
+                <form th:action="@{/admin/medico/citas/{id}/no-asistio(id=${a.id})}" method="post" class="inline-form"
+                      onsubmit="return confirm('¿Marcar esta cita como No Asistió?');">
+                    <button type="submit" class="btn btn-secondary">No Asistió</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- En consulta médica -->
+    <h2>En Consulta Médica</h2>
+    <p th:if="${#lists.isEmpty(panel.inConsultation)}" class="muted">No hay consultas en curso.</p>
+    <div class="queue-grid">
+        <div class="queue-card" th:each="a : ${panel.inConsultation}"
+             th:classappend="${a.priority.name() == 'EMERGENCIA'} ? 'queue-card-emergency'">
+            <p class="queue-title">
+                <span th:text="${a.appointmentNumber}">CIT</span>
+                <span class="badge badge-EMERGENCIA" th:if="${a.priority.name() == 'EMERGENCIA'}">Emergencia</span>
+            </p>
+            <p><strong th:text="${a.patient.fullName}">Paciente</strong></p>
+            <p class="muted" th:text="${a.branchSpecialty.specialty.name} + ' · ' + ${#temporals.format(a.scheduledAt, 'dd/MM/yyyy HH:mm')}">x</p>
+            <p><span class="badge" th:classappend="'badge-' + ${a.status.name()}" th:text="${a.status.label}"></span></p>
+            <a th:href="@{/admin/medico/citas/{id}/consulta(id=${a.id})}" class="btn btn-primary">Ver / Completar Consulta</a>
+        </div>
+    </div>
+
+    <!-- Evaluados: consulta finalizada, falta cerrar la atención -->
+    <h2>Evaluados — Pendiente de cierre</h2>
+    <p th:if="${#lists.isEmpty(panel.evaluated)}" class="muted">No hay pacientes pendientes de cierre.</p>
+    <div class="queue-grid">
+        <div class="queue-card" th:each="a : ${panel.evaluated}">
+            <p class="queue-title">
+                <span th:text="${a.appointmentNumber}">CIT</span>
+                <span class="badge badge-EMERGENCIA" th:if="${a.priority.name() == 'EMERGENCIA'}">Emergencia</span>
+            </p>
+            <p><strong th:text="${a.patient.fullName}">Paciente</strong></p>
+            <p class="muted" th:text="${a.branchSpecialty.specialty.name} + ' · ' + ${#temporals.format(a.scheduledAt, 'dd/MM/yyyy HH:mm')}">x</p>
+            <a th:href="@{/admin/medico/citas/{id}/consulta(id=${a.id})}" class="btn btn-secondary">Ver consulta</a>
+            <div th:replace="~{medico/acciones :: acciones(${a.id})}"></div>
+            <form th:action="@{/admin/medico/citas/{id}/finalizar(id=${a.id})}" method="post" class="action-row">
+                <button type="submit" class="btn btn-primary">Finalizar Atención</button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    const announcement = /*[[${announcement}]]*/ null;
+    if (announcement && 'speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(announcement);
+        utterance.lang = 'es-ES';
+        window.speechSynthesis.speak(utterance);
+    }
+    // Actualización automática cada 30 segundos (CU-08, paso 1).
+    setTimeout(() => window.location.reload(), 30000);
+</script>
+</body>
+</html>

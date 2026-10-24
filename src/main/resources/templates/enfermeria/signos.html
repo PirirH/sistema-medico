@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Registrar Signos Vitales')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container narrow">
+    <h1>Registrar Signos Vitales</h1>
+
+    <div class="summary-box">
+        <p><strong>Paciente:</strong> <span th:text="${appointment.patient.fullName}"></span></p>
+        <p><strong>Número de cita:</strong> <span th:text="${appointment.appointmentNumber}"></span></p>
+    </div>
+
+    <p th:if="${formError}" class="error-text" th:text="${formError}"></p>
+
+    <form th:action="@{/admin/enfermeria/citas/{id}/signos(id=${appointment.id})}"
+          th:object="${vitalSignsForm}" method="post" class="form">
+
+        <label for="systolic">Presión sistólica (mmHg, 60-250)</label>
+        <input type="number" th:field="*{systolic}" min="60" max="250" step="1">
+        <label for="diastolic">Presión diastólica (mmHg, 40-150)</label>
+        <input type="number" th:field="*{diastolic}" min="40" max="150" step="1">
+        <p class="error-text" th:if="${#fields.hasErrors('systolic')}" th:errors="*{systolic}"></p>
+        <p class="error-text" th:if="${#fields.hasErrors('diastolic')}" th:errors="*{diastolic}"></p>
+        <p id="alertPa" class="vital-alert hidden">Presión arterial fuera de rango normal. (Normal: 90/60 a 140/90)</p>
+
+        <label for="temperature">Temperatura (°C, 34.0-42.0)</label>
+        <input type="number" th:field="*{temperature}" min="34" max="42" step="0.1">
+        <p class="error-text" th:if="${#fields.hasErrors('temperature')}" th:errors="*{temperature}"></p>
+        <p id="alertTemp" class="vital-alert hidden">Temperatura fuera de rango normal. (Normal: 36.0 a 37.5 °C)</p>
+
+        <label for="weight">Peso (kg, 0.5-300)</label>
+        <input type="number" th:field="*{weight}" min="0.5" max="300" step="0.01">
+        <p class="error-text" th:if="${#fields.hasErrors('weight')}" th:errors="*{weight}"></p>
+
+        <label for="height">Talla (cm, 30-250)</label>
+        <input type="number" th:field="*{height}" min="30" max="250" step="0.01">
+        <p class="error-text" th:if="${#fields.hasErrors('height')}" th:errors="*{height}"></p>
+
+        <label for="heartRate">Frecuencia cardíaca (lpm, 30-220)</label>
+        <input type="number" th:field="*{heartRate}" min="30" max="220" step="1">
+        <p class="error-text" th:if="${#fields.hasErrors('heartRate')}" th:errors="*{heartRate}"></p>
+        <p id="alertHr" class="vital-alert hidden">Frecuencia cardíaca fuera de rango normal. (Normal: 60 a 100 lpm)</p>
+
+        <label class="checkbox-row">
+            <input type="checkbox" th:field="*{emergency}">
+            Es emergencia (el paciente pasa directo a consulta médica)
+        </label>
+
+        <div class="wizard-actions">
+            <a th:href="@{/admin/enfermeria/panel}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Registrar Signos Vitales</button>
+        </div>
+    </form>
+</main>
+
+<script>
+    // Alertas clínicas en tiempo real (RN-CU07-06): avisan, pero no impiden registrar.
+    const f = id => document.getElementById(id);
+    function num(id) { const v = parseFloat(f(id).value); return isNaN(v) ? null : v; }
+
+    function refreshAlerts() {
+        const sys = num('systolic'), dia = num('diastolic'), temp = num('temperature'), hr = num('heartRate');
+        f('alertPa').classList.toggle('hidden',
+            !(sys !== null && dia !== null && (sys < 90 || sys > 140 || dia < 60 || dia > 90)));
+        f('alertTemp').classList.toggle('hidden', !(temp !== null && (temp < 36.0 || temp > 37.5)));
+        f('alertHr').classList.toggle('hidden', !(hr !== null && (hr < 60 || hr > 100)));
+    }
+    ['systolic', 'diastolic', 'temperature', 'heartRate'].forEach(id => f(id).addEventListener('input', refreshAlerts));
+    refreshAlerts();
+</script>
+</body>
+</html>

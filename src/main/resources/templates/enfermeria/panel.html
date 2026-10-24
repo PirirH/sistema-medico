@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Panel de Enfermería')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main class="container">
+    <h1>Panel de Enfermería</h1>
+
+    <p th:if="${flashMessage}" class="notice notice-success" th:text="${flashMessage}"></p>
+    <p th:if="${flashWarning}" class="notice" th:text="${flashWarning}"></p>
+    <p th:if="${flashError}" class="notice notice-error" th:text="${flashError}"></p>
+
+    <!-- Paso 1 de CU-07: pacientes presentes, separados de los ya llamados -->
+    <h2>Pacientes presentes — pendientes de llamar</h2>
+    <p th:if="${#lists.isEmpty(panel.waiting)}" class="muted">No hay pacientes esperando toma de signos vitales.</p>
+    <div class="queue-grid">
+        <div class="queue-card" th:each="a : ${panel.waiting}"
+             th:classappend="${a.priority.name() == 'EMERGENCIA'} ? 'queue-card-emergency'">
+            <p class="queue-title">
+                <span th:text="'Turno ' + ${a.id}">Turno 1</span>
+                <span class="badge badge-EMERGENCIA" th:if="${a.priority.name() == 'EMERGENCIA'}">EMERGENCIA</span>
+            </p>
+            <p><strong th:text="${a.patient.fullName}">Paciente</strong></p>
+            <p class="muted" th:text="${a.appointmentNumber} + ' · ' + ${a.branchSpecialty.specialty.name}">CIT</p>
+            <p class="muted">Llegó: <span th:text="${#temporals.format(a.arrivalTime, 'HH:mm')}">08:00</span></p>
+            <form th:action="@{/admin/enfermeria/citas/{id}/llamar(id=${a.id})}" method="post">
+                <button type="submit" class="btn btn-primary">Llamar y Tomar Signos</button>
+            </form>
+        </div>
+    </div>
+
+    <h2>Pacientes llamados — en toma de signos</h2>
+    <p th:if="${#lists.isEmpty(panel.inProgress)}" class="muted">No hay pacientes en toma de signos.</p>
+    <div class="queue-grid">
+        <div class="queue-card" th:each="a : ${panel.inProgress}"
+             th:classappend="${a.priority.name() == 'EMERGENCIA'} ? 'queue-card-emergency'">
+            <p class="queue-title">
+                <span th:text="'Turno ' + ${a.id}">Turno 1</span>
+                <span class="badge badge-EMERGENCIA" th:if="${a.priority.name() == 'EMERGENCIA'}">EMERGENCIA</span>
+            </p>
+            <p><strong th:text="${a.patient.fullName}">Paciente</strong></p>
+            <p class="muted" th:text="${a.appointmentNumber} + ' · ' + ${a.branchSpecialty.specialty.name}">CIT</p>
+            <a th:href="@{/admin/enfermeria/citas/{id}/signos(id=${a.id})}" class="btn btn-primary">Registrar Signos Vitales</a>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    // Anuncio por altavoz (síntesis de voz del navegador) cuando se acaba de llamar a un paciente.
+    const announcement = /*[[${announcement}]]*/ null;
+    if (announcement && 'speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(announcement);
+        utterance.lang = 'es-ES';
+        window.speechSynthesis.speak(utterance);
+    }
+    // Se refresca solo para ver pacientes nuevos que registre recepción.
+    setTimeout(() => window.location.reload(), 30000);
+</script>
+</body>
+</html>
