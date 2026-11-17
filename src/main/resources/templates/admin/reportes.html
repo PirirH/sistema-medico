@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Reportes')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<link rel="stylesheet" th:href="@{/css/reportes.css}">
+
+<main class="container reports-container">
+    <h1>Reportes del Sistema</h1>
+    <p class="report-intro">Elija el rango de fechas y, en cada gráfico, el tipo que prefiera (barras, pastel, dona o línea).
+        Los datos se actualizan al pulsar «Generar».</p>
+
+    <p id="reportMsg" class="notice notice-error hidden"></p>
+
+    <form id="reportFilters" class="filter-bar report-filters" autocomplete="off">
+        <label>Desde
+            <input type="date" name="desde" th:value="${defaultFrom}">
+        </label>
+        <label>Hasta
+            <input type="date" name="hasta" th:value="${defaultTo}">
+        </label>
+        <label>Sucursal
+            <select name="sucursalId">
+                <option value="">Todas</option>
+                <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+            </select>
+        </label>
+        <label>Top
+            <select name="top">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </label>
+        <label>Pagos de
+            <select name="fuente">
+                <option value="ambos" selected>Citas y laboratorio</option>
+                <option value="citas">Solo citas</option>
+                <option value="laboratorio">Solo laboratorio</option>
+            </select>
+        </label>
+        <button type="submit" class="btn btn-primary">Generar</button>
+        <button type="button" class="btn btn-secondary" id="reportReset">Restablecer</button>
+    </form>
+
+    <div id="reportsRoot" class="reports-grid" th:attr="data-api=@{/admin/reportes/api}">
+
+        <section class="card report-card" id="card-medicos">
+            <header class="report-head">
+                <h2>Top de médicos con más consultas</h2>
+                <div class="report-tools">
+                    <label>Gráfico <select class="chart-type"></select></label>
+                    <button type="button" class="btn btn-secondary chart-download" title="Descargar PNG">⬇ PNG</button>
+                </div>
+            </header>
+            <p class="report-hint">Consultas finalizadas en el rango (según la fecha de inicio de la consulta).</p>
+            <p class="report-status">Cargando…</p>
+            <div class="chart-wrap"><canvas id="chart-medicos"></canvas></div>
+            <table class="report-table" id="table-medicos"></table>
+        </section>
+
+        <section class="card report-card" id="card-dias">
+            <header class="report-head">
+                <h2>Días de mayor demanda</h2>
+                <div class="report-tools">
+                    <label>Gráfico <select class="chart-type"></select></label>
+                    <button type="button" class="btn btn-secondary chart-download" title="Descargar PNG">⬇ PNG</button>
+                </div>
+            </header>
+            <p class="report-hint">Citas por día de la semana, sin contar las canceladas ni las pendientes de pago.</p>
+            <p class="report-status">Cargando…</p>
+            <div class="chart-wrap"><canvas id="chart-dias"></canvas></div>
+            <table class="report-table" id="table-dias"></table>
+        </section>
+
+        <section class="card report-card" id="card-medicamentos">
+            <header class="report-head">
+                <h2>Medicamentos más despachados</h2>
+                <div class="report-tools">
+                    <label>Gráfico <select class="chart-type"></select></label>
+                    <button type="button" class="btn btn-secondary chart-download" title="Descargar PNG">⬇ PNG</button>
+                </div>
+            </header>
+            <p class="report-hint">Unidades entregadas en farmacia (no incluye recetas «No adquiridas»).</p>
+            <p class="report-status">Cargando…</p>
+            <div class="chart-wrap"><canvas id="chart-medicamentos"></canvas></div>
+            <table class="report-table" id="table-medicamentos"></table>
+        </section>
+
+        <section class="card report-card" id="card-pagos">
+            <header class="report-head">
+                <h2>Pagos por método de pago</h2>
+                <div class="report-tools">
+                    <label>Gráfico <select class="chart-type"></select></label>
+                    <button type="button" class="btn btn-secondary chart-download" title="Descargar PNG">⬇ PNG</button>
+                </div>
+            </header>
+            <p class="report-hint">Pagos aprobados: efectivo y tarjetas por marca (Visa, Mastercard, Débito…).</p>
+            <p class="report-status">Cargando…</p>
+            <div class="chart-wrap"><canvas id="chart-pagos"></canvas></div>
+            <table class="report-table" id="table-pagos"></table>
+        </section>
+    </div>
+
+    <p><a th:href="@{/admin/dashboard}" class="btn btn-secondary">← Volver al panel</a></p>
+</main>
+
+<script th:src="@{/js/chart.umd.min.js}"></script>
+<script th:src="@{/js/reportes.js}"></script>
+</body>
+</html>

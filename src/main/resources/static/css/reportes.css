@@ -1,0 +1,35 @@
+/* Estilos del módulo de reportes (se carga solo en admin/reportes.html). */
+.reports-container { max-width: 1250px; }
+.report-intro { color: #4b5563; margin-top: 0; }
+
+.report-filters { display: flex; flex-wrap: wrap; gap: 0.9rem; align-items: flex-end; background: white; padding: 1rem 1.2rem; border-radius: 8px; margin-bottom: 1.2rem; }
+.report-filters label { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: 600; gap: 0.25rem; }
+.report-filters input, .report-filters select { padding: 0.45rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; font-family: inherit; }
+
+.reports-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 1.2rem; }
+.report-card { display: flex; flex-direction: column; min-width: 0; }
+.report-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.8rem; flex-wrap: wrap; }
+.report-head h2 { margin: 0; font-size: 1.1rem; color: #0f4c81; }
+.report-tools { display: flex; align-items: center; gap: 0.5rem; }
+.report-tools label { font-size: 0.82rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
+.report-tools select { padding: 0.3rem; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; }
+.report-tools .btn { padding: 0.3rem 0.6rem; font-size: 0.85rem; }
+.report-hint { font-size: 0.82rem; color: #6b7280; margin: 0.4rem 0 0.6rem; }
+.report-status { margin: 0.5rem 0; font-size: 0.92rem; color: #6b7280; }
+.report-empty { background: #f4f6f8; border-radius: 6px; padding: 1.2rem; text-align: center; }
+
+.chart-wrap { position: relative; height: 320px; }
+
+.report-table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; font-size: 0.88rem; }
+.report-table th, .report-table td { padding: 0.4rem 0.5rem; border-bottom: 1px solid #e5e7eb; text-align: left; }
+.report-table th { background: #f4f6f8; }
+.report-table tfoot td { font-weight: 700; border-top: 2px solid #d1d5db; border-bottom: none; }
+
+@media (max-width: 560px) {
+    .reports-grid { grid-template-columns: 1fr; }
+}
+@media print {
+    .report-filters, .report-tools, .btn { display: none !important; }
+    .report-card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+}
+.report-card .hidden, .reports-container .hidden { display: none !important; }

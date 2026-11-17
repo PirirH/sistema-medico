@@ -15,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Configuración de seguridad COMPLETA (Fases 1 a 5). Las reglas específicas van ANTES de la
+ * Configuración de seguridad COMPLETA (Fases 1 a 5 + Reportes). Las reglas específicas van ANTES de la
  * general de /admin/**: Spring usa la primera que coincide. Las rutas de módulos que aún no
  * hayas instalado simplemente no existen todavía; no causan ningún problema.
  */
@@ -54,7 +54,8 @@ public class SecurityConfig {
                         .requestMatchers("/admin/laboratorio/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
                         .requestMatchers("/admin/farmacia/**").hasAnyRole("FARMACEUTICO", "ADMINISTRADOR")
                         // ---- Administración
-                        .requestMatchers("/admin/usuarios/**", "/admin/catalogos/**", "/admin/sedes-especialidades/**")
+                        .requestMatchers("/admin/usuarios/**", "/admin/catalogos/**", "/admin/sedes-especialidades/**",
+                                "/admin/reportes/**")
                         .hasRole("ADMINISTRADOR")
                         .requestMatchers("/admin/**").hasAnyRole(
                                 "ADMINISTRADOR", "RECEPCIONISTA", "CAJERO", "MEDICO",
